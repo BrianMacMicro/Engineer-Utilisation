@@ -1,0 +1,830 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Engineer Utilisation Dashboard</title>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<style>
+:root{
+  color-scheme:light;
+  --accent:#1f4e79;--bg:#f4f7fb;--card:#ffffff;--card-border:#e8eef5;--text:#1f2937;--muted:#6b7280;--line:#d9e2ec;
+  --input:#ffffff;--hover:#f3f7fc;--pill:#f8fafc;--th:#2f6ea5;--total-bg:#e2f0d9;--total-fg:#1f2937;
+  --shadow:0 3px 14px rgba(31,78,121,.10);--hdr1:#1f4e79;--hdr2:#10354f;--hdr-sub:#dbeafe;
+  --upload-border:#9bbbd4;--upload-drag:#e8f4ff;--err-bg:#fff1f2;--err-fg:#991b1b;--err-line:#fecdd3;
+  --call-bg:#eef5fc;--call-line:#cfe0f2;
+  --g:#2e7d32;--a:#f9a825;--r:#c62828;--p:#7030a0;--n:#5b9bd5;
+  --g-bg:#e6f4ea;--g-fg:#1b5e20;--a-bg:#fff4d6;--a-fg:#7a4f00;--r-bg:#fdecea;--r-fg:#9b1c1c;--p-bg:#f1e6fa;--p-fg:#5b1f87;--x-bg:#f3f4f6;--x-fg:#9ca3af;
+  --up:#2e7d32;--down:#c62828;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  color-scheme:dark;
+  --accent:#8cbcec;--bg:#0f1720;--card:#18222e;--card-border:#223042;--text:#e5e9ef;--muted:#9aa6b5;--line:#2c3a4b;
+  --input:#111a24;--hover:#1f2c3b;--pill:#1f2c3b;--th:#24476b;--total-bg:#1e3a29;--total-fg:#e5e9ef;
+  --shadow:0 3px 14px rgba(0,0,0,.35);--hdr1:#16395c;--hdr2:#0a1d30;--hdr-sub:#b9d3ee;
+  --upload-border:#3a5577;--upload-drag:#1a2a3c;--err-bg:#3a1a1d;--err-fg:#fecaca;--err-line:#7f1d1d;
+  --call-bg:#16273a;--call-line:#2a4563;
+  --g:#43a047;--a:#f9b825;--r:#e53935;--p:#9c5bd4;--n:#5b9bd5;
+  --g-bg:#173622;--g-fg:#86efac;--a-bg:#3a2f12;--a-fg:#fcd34d;--r-bg:#3f1c1e;--r-fg:#fca5a5;--p-bg:#31204a;--p-fg:#d8b4fe;--x-bg:#1b2531;--x-fg:#5d6b7a;
+  --up:#66bb6a;--down:#ef5350;
+}}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --accent:#8cbcec;--bg:#0f1720;--card:#18222e;--card-border:#223042;--text:#e5e9ef;--muted:#9aa6b5;--line:#2c3a4b;
+  --input:#111a24;--hover:#1f2c3b;--pill:#1f2c3b;--th:#24476b;--total-bg:#1e3a29;--total-fg:#e5e9ef;
+  --shadow:0 3px 14px rgba(0,0,0,.35);--hdr1:#16395c;--hdr2:#0a1d30;--hdr-sub:#b9d3ee;
+  --upload-border:#3a5577;--upload-drag:#1a2a3c;--err-bg:#3a1a1d;--err-fg:#fecaca;--err-line:#7f1d1d;
+  --call-bg:#16273a;--call-line:#2a4563;
+  --g:#43a047;--a:#f9b825;--r:#e53935;--p:#9c5bd4;--n:#5b9bd5;
+  --g-bg:#173622;--g-fg:#86efac;--a-bg:#3a2f12;--a-fg:#fcd34d;--r-bg:#3f1c1e;--r-fg:#fca5a5;--p-bg:#31204a;--p-fg:#d8b4fe;--x-bg:#1b2531;--x-fg:#5d6b7a;
+  --up:#66bb6a;--down:#ef5350;
+}
+*{box-sizing:border-box}
+body{margin:0;font-family:"Segoe UI",Calibri,Arial,sans-serif;background:var(--bg);color:var(--text);font-size:14px}
+header{background:linear-gradient(135deg,var(--hdr1),var(--hdr2));color:#fff;padding:20px 32px;display:flex;align-items:center;gap:16px;flex-wrap:wrap;box-shadow:0 2px 10px rgba(0,0,0,.15)}
+header .titles{flex:1;min-width:240px}
+header h1{margin:0;font-size:25px}
+header p{margin:5px 0 0;color:var(--hdr-sub);font-size:14px}
+.theme-switch{display:inline-flex;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.25);border-radius:10px;padding:3px;gap:2px}
+.theme-switch button{border:0;background:none;color:#dbeafe;font:inherit;font-size:13px;font-weight:600;padding:6px 12px;border-radius:7px;cursor:pointer}
+.theme-switch button[aria-pressed="true"]{background:#fff;color:#1f4e79}
+main{padding:18px 24px 40px;max-width:1680px;margin:auto}
+h2{font-size:16px;margin:0 0 10px}
+.hidden{display:none!important}
+.upload{background:var(--card);border:2px dashed var(--upload-border);border-radius:16px;padding:26px;text-align:center;margin-bottom:18px}
+.upload.drag{background:var(--upload-drag);border-color:var(--accent)}
+.upload.compact{padding:10px 16px;text-align:left;display:flex;align-items:center;gap:12px;border:1px solid var(--line)}
+.upload.compact h2,.upload.compact .rules,.upload.compact .intro{display:none}
+.upload .loaded{display:none;color:var(--muted);font-size:13px}.upload.compact .loaded{display:block;flex:1}
+.rules{font-size:13px;color:var(--muted);margin-top:10px;line-height:1.55}
+input[type=file]{display:none}
+.btn{display:inline-block;padding:8px 14px;border-radius:9px;background:#1f4e79;color:#fff;font-weight:600;cursor:pointer;border:0;font:inherit;font-size:13px;white-space:nowrap}
+.btn.ghost{background:var(--input);color:var(--accent);border:1px solid var(--line)}
+.btn.green{background:#2e7d32}.btn.grey{background:#6b7280}
+.error{background:var(--err-bg);color:var(--err-fg);padding:12px;border-radius:10px;border:1px solid var(--err-line);margin-bottom:14px}
+.toolbar{background:var(--card);border:1px solid var(--card-border);border-radius:14px;box-shadow:var(--shadow);padding:12px 16px;display:flex;flex-wrap:wrap;gap:12px;align-items:flex-end;position:sticky;top:0;z-index:20}
+.fld{display:flex;flex-direction:column;gap:3px;font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;font-weight:600}
+.fld input,.fld select{padding:7px 9px;border:1px solid var(--line);border-radius:8px;font:inherit;font-size:13px;text-transform:none;letter-spacing:0;color:var(--text);background:var(--input);min-width:120px}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:9px;overflow:hidden;background:var(--input)}
+.seg button{border:0;background:none;font:inherit;font-size:13px;font-weight:600;color:var(--muted);padding:7px 14px;cursor:pointer;border-right:1px solid var(--line)}
+.seg button:last-child{border-right:0}
+.seg button[aria-pressed="true"]{background:var(--accent);color:var(--card)}
+.presets{display:flex;gap:4px;flex-wrap:wrap}
+.presets button{border:1px solid var(--line);background:var(--input);color:var(--text);font:inherit;font-size:12px;padding:5px 9px;border-radius:999px;cursor:pointer}
+.presets button:hover{border-color:var(--accent);color:var(--accent)}
+.spacer{flex:1}
+.ms{position:relative}
+.ms-btn{display:flex;justify-content:space-between;align-items:center;gap:10px;min-width:220px;padding:7px 10px;border:1px solid var(--line);border-radius:8px;background:var(--input);color:var(--text);font:inherit;font-size:13px;text-transform:none;letter-spacing:0;font-weight:400;cursor:pointer;text-align:left}
+.ms-btn[aria-expanded="true"]{border-color:var(--accent)}
+.ms-panel{position:absolute;top:calc(100% + 4px);left:0;z-index:40;background:var(--card);border:1px solid var(--line);border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,.18);padding:8px;min-width:260px;text-transform:none;letter-spacing:0;font-weight:400}
+.ms-actions{display:flex;gap:6px;padding:2px 2px 8px;border-bottom:1px solid var(--line);margin-bottom:6px}
+.ms-actions button{border:1px solid var(--line);background:var(--input);color:var(--accent);font:inherit;font-size:12px;font-weight:600;padding:4px 10px;border-radius:999px;cursor:pointer}
+.ms-list{max-height:320px;overflow-y:auto}
+.ms-list label{display:flex;align-items:center;gap:8px;padding:5px 6px;border-radius:6px;font-size:13px;color:var(--text);cursor:pointer}
+.ms-list label:hover{background:var(--hover)}
+.ms-list .cnt{margin-left:auto;color:var(--muted);font-size:11.5px}
+.fld .ms-list input{accent-color:#2f6ea5;width:15px;height:15px;min-width:0;padding:0;margin:0;flex:none}
+.ms-list label{white-space:nowrap}
+details.settings{margin-top:10px;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:8px 14px;font-size:13px}
+details.settings summary{cursor:pointer;font-weight:600;color:var(--accent)}
+details.settings .row{display:flex;flex-wrap:wrap;gap:14px;margin-top:10px;align-items:flex-end}
+.tabs{display:flex;gap:2px;border-bottom:2px solid var(--line);margin:16px 0 14px;flex-wrap:wrap}
+.tab{padding:10px 16px;border:0;background:none;font:inherit;font-weight:600;color:var(--muted);cursor:pointer;border-bottom:3px solid transparent;margin-bottom:-2px}
+.tab.active{color:var(--accent);border-bottom-color:var(--accent)}
+.panel{display:none}.panel.active{display:block}
+.grid{display:grid;gap:14px}
+.kpis{grid-template-columns:repeat(auto-fit,minmax(170px,1fr));margin-bottom:14px}
+.two{grid-template-columns:1fr 1fr}.wide{grid-template-columns:3fr 2fr}
+.section{margin-top:14px}
+.card{background:var(--card);border-radius:14px;padding:16px;box-shadow:var(--shadow);border:1px solid var(--card-border);min-width:0}
+.kpi{border-left:5px solid var(--n)}
+.kpi.g{border-left-color:var(--g)}.kpi.a{border-left-color:var(--a)}.kpi.r{border-left-color:var(--r)}.kpi.p{border-left-color:var(--p)}
+.kpi .label{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;font-weight:600}
+.kpi .value{font-size:26px;font-weight:800;margin-top:3px}
+.kpi .sub{font-size:12px;color:var(--muted);margin-top:2px;line-height:1.4}
+.delta{font-weight:700}.delta.up{color:var(--up)}.delta.down{color:var(--down)}
+.sec-h{font-size:12px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin:4px 0 8px;font-weight:700}
+.chart-wrap{position:relative;height:320px}
+.note{font-size:12px;color:var(--muted);margin-top:8px;line-height:1.45}
+.callout{background:var(--call-bg);border:1px solid var(--call-line);border-radius:12px;padding:11px 14px;font-size:13px;line-height:1.5;margin-bottom:14px}
+.table-wrap{overflow:auto;border:1px solid var(--line);border-radius:10px;max-height:520px}
+table{border-collapse:collapse;width:100%;font-size:12.5px;background:var(--card)}
+th,td{border-bottom:1px solid var(--line);padding:7px 9px;text-align:left;vertical-align:top}
+th{background:var(--th);color:#fff;position:sticky;top:0;z-index:2;white-space:nowrap;cursor:pointer;user-select:none;font-weight:600}
+th .arr{opacity:.75;font-size:10px;margin-left:3px}
+td.num,th.num{text-align:right;white-space:nowrap}
+tbody tr:hover td{background:var(--hover)}
+tr.total td{font-weight:700;background:var(--total-bg);color:var(--total-fg);position:sticky;bottom:0}
+tr.click{cursor:pointer}
+td.rag-g{background:var(--g-bg);color:var(--g-fg);font-weight:700}
+td.rag-a{background:var(--a-bg);color:var(--a-fg);font-weight:700}
+td.rag-r{background:var(--r-bg);color:var(--r-fg);font-weight:700}
+td.rag-p{background:var(--p-bg);color:var(--p-fg);font-weight:700}
+td.rag-x{background:var(--x-bg);color:var(--x-fg)}
+td.muted{color:var(--muted)}
+.heat td{text-align:center;white-space:nowrap;min-width:58px;padding:6px 6px}
+.heat td.name,.heat th.name{text-align:left;position:sticky;left:0;z-index:1;background:var(--card);min-width:170px}
+.heat th.name{z-index:3;background:var(--th)}
+.heat td.grp{color:var(--muted);text-align:left;font-size:11.5px}
+.tag{display:inline-block;padding:2px 8px;border-radius:999px;font-size:11px;font-weight:700;color:#fff;white-space:nowrap}
+.filters{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 10px;align-items:center}
+.filters input,.filters select{padding:7px 9px;border:1px solid var(--line);border-radius:8px;min-width:160px;font:inherit;font-size:13px;background:var(--input);color:var(--text)}
+.count{font-size:12px;color:var(--muted)}
+.legend-list{font-size:12.5px;line-height:1.65;margin:0;padding-left:18px}
+.sw{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:5px;vertical-align:middle}
+.eng-chip{display:inline-flex;align-items:center;gap:6px;background:var(--pill);border:1px solid var(--line);border-radius:999px;padding:4px 6px 4px 12px;font-weight:600;font-size:13px}
+.eng-chip button{border:0;background:var(--line);color:var(--text);border-radius:999px;width:20px;height:20px;cursor:pointer;font-weight:700;line-height:1}
+@media(max-width:1100px){.two,.wide{grid-template-columns:1fr}}
+@media(max-width:640px){main{padding:12px 16px}header{padding:16px}.toolbar{position:static}}
+.print-only{display:none}
+body.printing main{width:1040px;max-width:1040px;padding:0}
+body.printing .panel{display:none}body.printing .panel.print-on{display:block}
+body.printing #panel-overview .chart-wrap,body.printing #panel-quality .chart-wrap{height:235px}
+body.printing .grid.wide{grid-template-columns:1fr}body.printing #engRankCard{display:none}
+@media print{
+  @page{size:A4 landscape;margin:9mm 9mm 12mm}
+  @page{@bottom-left{content:"Engineer Utilisation Report";font:8pt "Segoe UI",Arial;color:#6b7280}@bottom-right{content:"Page " counter(page) " of " counter(pages);font:8pt "Segoe UI",Arial;color:#6b7280}}
+  html,body{background:#fff!important;font-size:11px;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  header,.upload,.toolbar,.tabs,details.settings,.no-print,.filters select,.filters input,.filters .btn,.filters .fld,#engRankCard,.error{display:none!important}
+  .print-only{display:block!important}
+  main{width:auto!important;max-width:none!important;padding:0!important}
+  #printHeader{border-bottom:2px solid #1f4e79;padding:0 0 8px;margin-bottom:10px}
+  #printHeader .ph-title{font-size:20px;font-weight:800;color:#1f4e79}
+  #printHeader .ph-meta{font-size:10.5px;color:#374151;margin-top:4px;line-height:1.5}
+  #printHeader .ph-meta b{color:#111827}
+  .panel{display:none!important}
+  .panel.print-on{display:block!important;break-before:page}
+  .panel.print-on.first-print{break-before:auto}
+  .panel-title{font-size:15px;color:#1f4e79;margin:0 0 8px;padding-bottom:4px;border-bottom:1px solid #d9e2ec}
+  .card{box-shadow:none!important;border:1px solid #d9e2ec;padding:9px 10px;border-radius:8px;break-inside:avoid}
+  .section{margin-top:8px}.grid{gap:8px}
+  .kpis{grid-template-columns:repeat(auto-fit,minmax(118px,1fr));margin-bottom:8px}
+  .kpi{border-left-width:4px}.kpi .label{font-size:8px}.kpi .value{font-size:17px}.kpi .sub{font-size:8.5px}
+  .sec-h{font-size:9px;margin:2px 0 4px}
+  .callout{padding:6px 9px;font-size:10px;margin-bottom:8px}
+  .grid.two{grid-template-columns:1fr 1fr}.grid.wide{grid-template-columns:1fr}
+  .chart-wrap{break-inside:avoid}
+  .card:has(.table-wrap){break-inside:auto}
+  #panel-groups .grid.two{grid-template-columns:2fr 3fr}
+  .card h2{break-after:avoid}
+  h2{font-size:12.5px;margin-bottom:6px}
+  .table-wrap{max-height:none!important;overflow:visible!important;border:0;border-radius:0}
+  table{font-size:9px}th,td{padding:3px 5px}
+  th{position:static!important;background:#2f6ea5!important;color:#fff!important}
+  thead{display:table-header-group}tr{break-inside:avoid}
+  tr.total td{position:static!important}
+  .heat table{font-size:8px}.heat td{min-width:0!important;padding:2px 3px}.heat td.name,.heat th.name{position:static!important;min-width:0!important}
+  .note{font-size:8.5px;margin-top:4px}
+  #qTable tbody tr:nth-child(n+51){display:none}
+  #oddTable tbody tr:nth-child(n+81){display:none}
+  .filters{margin-bottom:4px}
+}
+</style>
+</head>
+<body>
+<header>
+  <div class="titles">
+    <h1>Engineer Utilisation Dashboard</h1>
+    <p id="periodLine">Import a Service Now work order task (wm_task) export to begin.</p>
+  </div>
+  <div class="theme-switch no-print" role="group" aria-label="Colour theme">
+    <button type="button" data-theme-choice="auto" aria-pressed="true">Auto</button>
+    <button type="button" data-theme-choice="light" aria-pressed="false">Light</button>
+    <button type="button" data-theme-choice="dark" aria-pressed="false">Dark</button>
+  </div>
+</header>
+<main>
+<div id="printHeader" class="print-only"></div>
+<section id="uploadBox" class="upload">
+  <h2>Import Service Now work order tasks</h2>
+  <p class="intro">Drag and drop one or more wm_task exports (.xlsx or .csv), or choose them. Several exports are merged, with duplicate WOT numbers removed.</p>
+  <div class="loaded" id="loadedLine"></div>
+  <label class="btn" for="fileInput" id="chooseBtn">Choose files</label>
+  <button class="btn ghost hidden" id="clearBtn" type="button">Start again</button>
+  <input id="fileInput" type="file" accept=".xlsx,.xlsm,.xls,.csv" multiple />
+  <div class="rules">
+    Columns are found by name, so their order doesn't matter. Needed: <b>Number, State, Assigned to, Assignment group, Scheduled start, Actual work start, Actual work end, Estimated work duration</b>.
+    Used if present: Customer incident (VH… = install, CS… = service), Estimated travel duration, Actual travel start / duration, Closed.
+  </div>
+</section>
+<div id="errorBox" class="error hidden"></div>
+
+<section id="dashboard" class="hidden">
+  <div class="toolbar">
+    <label class="fld">From<input type="date" id="fFrom"></label>
+    <label class="fld">To<input type="date" id="fTo"></label>
+    <div class="fld">Quick range<div class="presets" id="presets">
+      <button data-p="4w">Last 4 weeks</button><button data-p="3m">Last 3 months</button><button data-p="6m">Last 6 months</button><button data-p="12m">Last 12 months</button><button data-p="ytd">Year to date</button><button data-p="all">All data</button>
+    </div></div>
+    <div class="fld">View by<div class="seg" id="gran"><button data-g="year" aria-pressed="false">Year</button><button data-g="month" aria-pressed="true">Month</button><button data-g="week" aria-pressed="false">Week</button></div></div>
+    <div class="fld">Engineer groups<div class="ms" id="groupMs">
+      <button type="button" class="ms-btn" id="groupBtn" aria-haspopup="true" aria-expanded="false"><span id="groupBtnText">All internal groups</span><span aria-hidden="true">▾</span></button>
+      <div class="ms-panel hidden" id="groupPanel" role="group" aria-label="Engineer groups">
+        <div class="ms-actions"><button type="button" data-ms="all">All</button><button type="button" data-ms="none">None</button><button type="button" data-ms="uk" title="Untick APAC - ANZ, Engineering International and Engineering France">UK only</button></div>
+        <div class="ms-list" id="groupList"></div>
+      </div>
+    </div></div>
+    <label class="fld">Engineer<select id="fEng"></select></label>
+    <span class="spacer"></span>
+    <div class="fld no-print">Export<div style="display:flex;gap:6px;flex-wrap:wrap">
+      <button class="btn green" onclick="exportPeriods()">Periods CSV</button>
+      <button class="btn green" onclick="exportEngineers()">Engineers CSV</button>
+      <div class="ms" id="printMs"><button class="btn grey" type="button" id="printBtn" aria-expanded="false">Print / PDF ▾</button>
+        <div class="ms-panel hidden" id="printPanel" style="left:auto;right:0">
+          <div class="sec-h" style="margin:2px 4px 6px">Include in the PDF</div>
+          <div class="ms-list" id="printList">
+            <label><input type="checkbox" value="overview" checked> Overview</label>
+            <label><input type="checkbox" value="engineers" checked> Engineers</label>
+            <label><input type="checkbox" value="heatmap" checked> Heatmap</label>
+            <label><input type="checkbox" value="groups" checked> Groups</label>
+            <label><input type="checkbox" value="quality" checked> Data Quality</label>
+            <label><input type="checkbox" value="import"> Import Summary</label>
+          </div>
+          <p class="note" style="margin:6px 4px 8px">A4 landscape, light theme. Pick "Save as PDF" as the printer.</p>
+          <button class="btn" type="button" id="printGo" style="width:100%">Print / Save as PDF</button>
+        </div></div>
+    </div></div>
+  </div>
+  <details class="settings no-print">
+    <summary>Utilisation settings</summary>
+    <div class="row">
+      <label class="fld">Target utilisation %<input type="number" id="sTarget" min="10" max="150" step="5" value="80"></label>
+      <label class="fld">Shift length (minutes)<input type="number" id="sShift" min="60" max="900" step="10" value="500"></label>
+      <label class="fld">Capacity basis<select id="sBasis"><option value="jobdays">Days each engineer worked (had jobs)</option><option value="weekdays">Every weekday in the period</option></select></label>
+      <label class="fld">Travel time in actual<select id="sTravel"><option value="planned">Planned travel</option><option value="actual">Actual travel where recorded</option></select></label>
+      <label class="fld">Instant close below (min)<input type="number" id="sInstant" min="1" max="60" value="5"></label>
+      <label class="fld">Over-run above (× planned)<input type="number" id="sOver" min="1.2" max="10" step="0.1" value="2"></label>
+      <label class="fld">On-time window (± min)<input type="number" id="sOntime" min="5" max="120" step="5" value="30"></label>
+    </div>
+    <p class="note"><b>Days each engineer worked</b> measures how full their working days were (no leave data is needed, but idle days are not counted).
+    <b>Every weekday</b> assumes each active engineer was available Monday–Friday, so leave, training and sickness pull utilisation down.
+    Actual travel is used only where it was recorded and is between 0 and 5 hours; otherwise the planned travel is used.</p>
+  </details>
+
+  <nav class="tabs" id="tabs">
+    <button class="tab active" data-tab="overview">Overview</button>
+    <button class="tab" data-tab="engineers">Engineers</button>
+    <button class="tab" data-tab="heatmap">Heatmap</button>
+    <button class="tab" data-tab="groups">Groups</button>
+    <button class="tab" data-tab="quality">Data Quality</button>
+    <button class="tab" data-tab="import">Import Summary</button>
+  </nav>
+
+  <!-- OVERVIEW -->
+  <section class="panel active" id="panel-overview">
+    <h2 class="print-only panel-title">Overview</h2>
+    <div class="callout" id="scopeNote"></div>
+    <div class="sec-h">Utilisation (internal engineers)</div>
+    <section class="grid kpis" id="kpiUtil"></section>
+    <div class="sec-h">Workload</div>
+    <section class="grid kpis" id="kpiWork"></section>
+    <section class="grid two">
+      <div class="card"><h2 id="utilTrendTitle">Utilisation Trend</h2><div class="chart-wrap"><canvas id="utilTrend"></canvas></div>
+        <p class="note">Planned = scheduled work + travel ÷ capacity. Actual = recorded work time where believable (flagged jobs at plan) + travel ÷ capacity. Dashed line = target.</p></div>
+      <div class="card"><h2 id="hoursTrendTitle">Planned Hours vs Capacity</h2><div class="chart-wrap"><canvas id="hoursTrend"></canvas></div>
+        <p class="note">Bars: planned install and service hours (work + travel). Lines: capacity hours and actual hours.</p></div>
+    </section>
+    <section class="card section">
+      <div class="filters" style="margin-bottom:6px"><h2 style="margin:0 12px 0 0" id="demandTitle">Demand: Installations vs Service</h2>
+        <label class="fld no-print">Measure<select id="dMeasure"><option value="jobs">Jobs</option><option value="hours">Planned hours</option></select></label>
+        <label class="fld no-print">Work included<select id="dScope"><option value="internal">Internal engineers (current filters)</option><option value="all">All work incl. contractors</option></select></label>
+        <span class="count" id="demandSummary"></span></div>
+      <div class="chart-wrap"><canvas id="demandTrend"></canvas></div>
+      <p class="note" id="demandNote"></p>
+    </section>
+    <section class="card section"><h2 id="periodTableTitle">By Period</h2><div id="periodTable" class="table-wrap"></div><p class="note" id="periodNote"></p></section>
+  </section>
+
+  <!-- ENGINEERS -->
+  <section class="panel" id="panel-engineers">
+    <h2 class="print-only panel-title">Engineers</h2>
+    <section class="grid wide">
+      <div class="card"><h2>Engineer Utilisation</h2><p class="note no-print" style="margin:0 0 8px">Click an engineer to focus the whole dashboard on them.</p><div id="engTable" class="table-wrap" style="max-height:640px"></div></div>
+      <div class="card" id="engRankCard"><h2>Actual Utilisation by Engineer</h2><div style="max-height:640px;overflow-y:auto"><div class="chart-wrap" id="engRankWrap"><canvas id="engRank"></canvas></div></div></div>
+    </section>
+  </section>
+
+  <!-- HEATMAP -->
+  <section class="panel" id="panel-heatmap">
+    <h2 class="print-only panel-title">Engineer Heatmap</h2>
+    <div class="card">
+      <div class="filters">
+        <h2 style="margin:0 12px 0 0" id="heatTitle">Engineer × Period</h2>
+        <label class="fld">Show<select id="hMetric"><option value="actUtil">Actual utilisation</option><option value="planUtil">Planned utilisation</option><option value="jobs">Jobs</option><option value="hours">Actual hours</option><option value="quality">Time capture quality</option></select></label>
+        <label class="fld">Sort<select id="hSort"><option value="group">Group, then name</option><option value="name">Name</option><option value="high">Highest overall first</option><option value="low">Lowest overall first</option></select></label>
+        <span class="count" id="heatCount"></span><span class="print-only note" id="heatPrintMetric" style="margin:0"></span>
+      </div>
+      <div id="heatTable" class="table-wrap heat" style="max-height:680px"></div>
+      <p class="note">Colours compare each cell with the target: <span class="sw" style="background:var(--g)"></span>at or above target <span class="sw" style="background:var(--a)"></span>within 15 points <span class="sw" style="background:var(--r)"></span>further below <span class="sw" style="background:var(--p)"></span>over 105%. Blank = no jobs in that period.</p>
+    </div>
+  </section>
+
+  <!-- GROUPS -->
+  <section class="panel" id="panel-groups">
+    <h2 class="print-only panel-title">Groups</h2>
+    <section class="grid two">
+      <div class="card"><h2>Planned vs Actual Utilisation by Group</h2><div class="chart-wrap" id="groupWrap"><canvas id="groupChart"></canvas></div></div>
+      <div class="card"><h2>Group Summary</h2><div id="groupTable" class="table-wrap"></div><p class="note" id="contractorNote"></p></div>
+    </section>
+  </section>
+
+  <!-- IMPORT SUMMARY -->
+  <section class="panel" id="panel-import">
+    <h2 class="print-only panel-title">Import Summary</h2>
+    <section class="grid two">
+      <div class="card"><h2>From export rows to jobs in utilisation</h2><div id="funnelTable" class="table-wrap"></div>
+        <p class="note">Follows the current date range, group ticks and engineer selection, so it always adds up to the Jobs figure on the Overview.</p></div>
+      <div class="card"><h2>Rows by state</h2><div id="stateTable" class="table-wrap" style="margin-bottom:14px"></div>
+        <h2>Rows by assignment group</h2><div id="groupRowsTable" class="table-wrap" style="max-height:330px"></div></div>
+    </section>
+    <section class="card section"><h2>Dates to check</h2><p class="note" style="margin:0 0 8px" id="oddNote"></p><div id="oddTable" class="table-wrap" style="max-height:460px"></div></section>
+  </section>
+
+  <!-- DATA QUALITY -->
+  <section class="panel" id="panel-quality">
+    <h2 class="print-only panel-title">Data Quality</h2>
+    <div class="callout">Recorded work time is only as good as when engineers start and close jobs. Each job is checked, and any that aren't believable count at their <b>planned</b> time in "actual" utilisation, so late closures don't inflate it.</div>
+    <section class="grid kpis" id="kpiDQ"></section>
+    <section class="grid two">
+      <div class="card"><h2 id="dqTrendTitle">Timing Quality by Period</h2><div class="chart-wrap"><canvas id="dqTrend"></canvas></div></div>
+      <div class="card"><h2>How timings are judged</h2><ul class="legend-list" id="flagLegend"></ul></div>
+    </section>
+    <section class="card section"><h2>Flagged Jobs</h2>
+      <div class="filters"><select id="qFlag"></select><select id="qEng"></select><input id="qSearch" placeholder="Search WOT…"><span class="count" id="qCount"></span>
+        <button class="btn green" onclick="exportFlagged()" style="margin-left:auto">Flagged jobs CSV</button></div>
+      <div id="qTable" class="table-wrap" style="max-height:480px"></div><p class="print-only note" id="qPrintNote"></p>
+    </section>
+  </section>
+</section>
+</main>
+
+<script>
+/* ============================================================ CONFIG */
+const INTERNAL_GROUPS=['APAC - ANZ','Engineering East','Engineering France','Engineering Installations','Engineering International','Engineering North','Engineering South','Engineering Team Leads','Engineering Team UK','Engineering Training','Engineering West','Field Engineering','Hardware Technical Services','Product Compliance Engineer','Product Engineering'];
+const CFG={target:.8,shift:500,basis:'jobdays',travel:'planned',instantMin:5,overRatio:2,overExtraMin:60,maxMin:720,ontime:30,maxTravel:300};
+const COLS={number:['Number'],incident:['Customer incident'],state:['State'],assigned:['Assigned to'],group:['Assignment group'],
+  schedStart:['Scheduled start'],actStart:['Actual work start'],actEnd:['Actual work end'],actTravelStart:['Actual travel start'],actTravelDur:['Actual travel duration'],
+  estWork:['Estimated work duration'],estTravel:['Estimated travel duration'],estEnd:['Estimated end'],closed:['Closed','Closed_2','Closed.2'],asset:['Asset type'],res:['Resolution code']};
+const REQUIRED=['number','state','assigned','group','schedStart','actStart','actEnd','estWork'];
+const C_LIGHT={plan:'#9dc3e6',act:'#1f4e79',target:'#c62828',inst:'#1f4e79',serv:'#7030a0',cap:'#6b7280',g:'#2e7d32',a:'#f9a825',o:'#e65100',r:'#c62828',p:'#7030a0',x:'#9ca3af'};
+const C_DARK={plan:'#3a5f85',act:'#8cbcec',target:'#ef5350',inst:'#7fb2e5',serv:'#b98ae0',cap:'#9aa6b5',g:'#43a047',a:'#e8a317',o:'#f57c00',r:'#e53935',p:'#9c5bd4',x:'#6b7785'};
+const C={...C_LIGHT},TH={grid:'#edf2f7',label:'#1f2937',text:'#4b5563',card:'#ffffff'};
+const FLAGS={ok:{label:'Plausible'},over:{label:'Over-run (late close)'},overnight:{label:'Next-day / >12h'},instant:{label:'Instant close'},invalid:{label:'Zero / negative'},missing:{label:'No actual times'}};
+const FLAG_ORDER=['ok','over','overnight','instant','invalid','missing'];
+function flagColors(){Object.assign(FLAGS.ok,{color:C.g});Object.assign(FLAGS.over,{color:C.a});Object.assign(FLAGS.overnight,{color:C.o});Object.assign(FLAGS.instant,{color:C.p});Object.assign(FLAGS.invalid,{color:C.r});Object.assign(FLAGS.missing,{color:C.x})}
+flagColors();
+
+let PRINTING=false,IMPORT={read:0},CLOSED_MIN='',CLOSED_MAX='',ALL_GROUPS=[],GROUPS_ON=new Set(),JOBS=[],ALL=[],FILES=[],DATA_MIN='',DATA_MAX='',DEFAULT_FROM='',GRAN='month',VIEW=null,charts={};
+const byId=id=>document.getElementById(id);
+
+/* ============================================================ HELPERS */
+const norm=v=>String(v??'').trim(),lower=v=>norm(v).toLowerCase();
+const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const pct=(n,d=1)=>n==null||!isFinite(n)?'–':(n*100).toFixed(d)+'%';
+const num=n=>Number(n||0).toLocaleString('en-GB');
+const hrs=m=>(m/60).toLocaleString('en-GB',{maximumFractionDigits:0});
+const hrs1=m=>(m/60).toLocaleString('en-GB',{minimumFractionDigits:1,maximumFractionDigits:1});
+const mins=m=>{if(m==null||!isFinite(m))return'–';const a=Math.abs(m);return a<60?Math.round(m)+'m':a<1440?(m/60).toFixed(1)+'h':(m/1440).toFixed(1)+'d'};
+const MON=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+function toWall(v){
+  if(v===null||v===undefined||v==='')return null;
+  if(typeof v==='number'){return v>20000&&v<80000?Math.round((v-25569)*86400)*1000:null}
+  if(v instanceof Date&&!isNaN(v))return Date.UTC(v.getFullYear(),v.getMonth(),v.getDate(),v.getHours(),v.getMinutes(),v.getSeconds());
+  const s=String(v).trim();let m=s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})(?:[ T,]+(\d{1,2}):(\d{2})(?::(\d{2}))?)?/);
+  if(m)return Date.UTC(+m[3],m[2]-1,+m[1],+(m[4]||0),+(m[5]||0),+(m[6]||0));
+  m=s.match(/^(\d{4})-(\d{2})-(\d{2})(?:[ T](\d{2}):(\d{2})(?::(\d{2}))?)?/);
+  if(m)return Date.UTC(+m[1],m[2]-1,+m[3],+(m[4]||0),+(m[5]||0),+(m[6]||0));
+  const d=new Date(s);return isNaN(d)?null:toWall(d);
+}
+function durMin(v){if(v===null||v===undefined||v==='')return 0;const n=Number(v);if(!isNaN(n)){if(n===0)return 0;if(n<1&&!Number.isInteger(n))return n*1440;/* Excel time fraction */return n/60/* Service Now seconds */}
+  const m=String(v).match(/(?:(\d+)\s*d\D*)?(?:(\d+):)?(\d{1,2}):(\d{2})/);if(m)return(+(m[1]||0))*1440+(+(m[2]||0))*60+(+m[3])+(+m[4])/60;return 0}
+const dayKey=ms=>ms==null?'':new Date(ms).toISOString().slice(0,10);
+const dms=k=>Date.parse(k+'T00:00:00Z');
+const addDays=(k,n)=>dayKey(dms(k)+n*86400000);
+function fmtDay(k){if(!k)return'';const [y,m,d]=k.split('-');return +d+' '+MON[+m-1]+' '+y}
+function fmtDT(ms){if(ms==null)return'–';const d=new Date(ms);return String(d.getUTCDate()).padStart(2,'0')+' '+MON[d.getUTCMonth()]+' '+String(d.getUTCHours()).padStart(2,'0')+':'+String(d.getUTCMinutes()).padStart(2,'0')}
+function weekdaysBetween(a,b){if(!a||!b||a>b)return 0;let n=0;for(let t=dms(a),e=dms(b);t<=e;t+=86400000){const w=new Date(t).getUTCDay();if(w>0&&w<6)n++}return n}
+function median(a){if(!a.length)return 0;const s=[...a].sort((x,y)=>x-y),m=s.length>>1;return s.length%2?s[m]:(s[m-1]+s[m])/2}
+function isInternal(g){const l=lower(g);return !!l&&(INTERNAL_GROUPS.some(x=>lower(x)===l)||l.startsWith('engineering'))}
+function workType(inc){const p=norm(inc).toUpperCase();return p.startsWith('VH')?'install':p.startsWith('CS')?'service':'other'}
+
+/* periods */
+function isoWeek(k){const d=new Date(dms(k));const day=(d.getUTCDay()+6)%7;d.setUTCDate(d.getUTCDate()-day+3);const fy=d.getUTCFullYear();const jan4=new Date(Date.UTC(fy,0,4));return 1+Math.round(((d-jan4)/86400000-3+((jan4.getUTCDay()+6)%7))/7)}
+function periodKey(k,g){if(g==='year')return k.slice(0,4);if(g==='month')return k.slice(0,7);const w=(new Date(dms(k)).getUTCDay()+6)%7;return addDays(k,-w)}
+function periodBounds(key,g){if(g==='year')return{from:key+'-01-01',to:key+'-12-31'};if(g==='month'){const [y,m]=key.split('-').map(Number);return{from:key+'-01',to:dayKey(Date.UTC(y,m,0))}}return{from:key,to:addDays(key,6)}}
+function periodLabel(key,g){if(g==='year')return key;if(g==='month'){const [y,m]=key.split('-');return MON[+m-1]+' '+y}const [y,m,d]=key.split('-');return'Wk '+isoWeek(key)+' · '+ +d+' '+MON[+m-1]}
+function periodKeysBetween(from,to,g){const out=[];let k=periodKey(from,g);while(k<=to){out.push(k);const b=periodBounds(k,g);k=periodKey(addDays(b.to,1),g)}return out}
+
+/* ============================================================ IMPORT */
+function resolveCols(headers){const M={};for(const [k,c] of Object.entries(COLS)){M[k]=null;for(const n of c){const h=headers.find(x=>lower(x)===lower(n));if(h){M[k]=h;break}}}return M}
+function readWorkbook(file){return new Promise((res,rej)=>{const csv=/\.csv$/i.test(file.name),r=new FileReader();
+  r.onload=e=>{try{res(csv?XLSX.read(e.target.result,{type:'string'}):XLSX.read(e.target.result,{type:'array',cellDates:false}))}catch(err){rej(new Error('Could not read '+file.name+': '+err.message))}};
+  r.onerror=()=>rej(new Error('Could not read '+file.name));csv?r.readAsText(file):r.readAsArrayBuffer(file)})}
+function buildJob(r,M,headers){
+  const g=k=>M[k]?r[M[k]]:'';
+  const state=norm(g('state')),group=norm(g('group'));
+  const schedStart=toWall(g('schedStart')),actStart=toWall(g('actStart')),actEnd=toWall(g('actEnd')),closed=toWall(g('closed'));
+  const actTravelStart=toWall(g('actTravelStart'));
+  let actTravel=M.actTravelDur&&g('actTravelDur')!==''?durMin(g('actTravelDur')):(actTravelStart!=null&&actStart!=null?(actStart-actTravelStart)/60000:null);
+  let planWork=durMin(g('estWork'));const estEnd=toWall(g('estEnd'));if(!planWork&&schedStart!=null&&estEnd!=null&&estEnd>schedStart)planWork=(estEnd-schedStart)/60000;
+  const cancelled=lower(state)==='cancelled';
+  const date=cancelled?(closed??schedStart):(actStart??schedStart??actEnd??closed);
+  return{number:norm(g('number')),state,sl:lower(state),cancelled,eng:norm(g('assigned')),group,internal:isInternal(group),
+    wtype:workType(M.incident?g('incident'):r[headers[1]]),asset:norm(g('asset')),res:norm(g('res')),
+    schedStart,actStart,actEnd,closed,estEnd,planWork,planTravel:durMin(g('estTravel')),actTravel,
+    actual:actStart!=null&&actEnd!=null?(actEnd-actStart)/60000:null,
+    startVar:actStart!=null&&schedStart!=null?(actStart-schedStart)/60000:null,
+    manualStart:actStart!=null&&(actStart/1000)%60===0,day:dayKey(date)};
+}
+async function handleFiles(list){
+  const box=byId('errorBox');box.classList.add('hidden');
+  try{
+    if(!window.XLSX)throw new Error('The spreadsheet library did not load. Check your internet connection and reload the page.');
+    const files=[...list].filter(f=>/\.(xlsx|xlsm|xls|csv)$/i.test(f.name));if(!files.length)throw new Error('Please choose .xlsx or .csv exports.');
+    const found=[],skipped=[];
+    for(const f of files){const wb=await readWorkbook(f);let used=false;
+      for(const n of wb.SheetNames){const rows=XLSX.utils.sheet_to_json(wb.Sheets[n],{defval:''});if(!rows.length)continue;const headers=Object.keys(rows[0]),M=resolveCols(headers);
+        if(REQUIRED.every(k=>M[k])){rows.forEach(r=>{if(norm(r[M.number]))found.push(buildJob(r,M,headers))});used=true}}
+      if(!used)skipped.push(f.name)}
+    if(!found.length&&!ALL.length){const miss=REQUIRED.map(k=>COLS[k][0]).join(', ');throw new Error('No work order task data found'+(skipped.length?' in '+skipped.join(', '):'')+'. The sheet needs these columns: '+miss+'.')}
+    IMPORT.read+=found.length;const map=new Map(ALL.map(j=>[j.number,j]));found.forEach(j=>map.set(j.number,j));ALL=[...map.values()];
+    FILES=[...new Set([...FILES,...files.filter(f=>!skipped.includes(f.name)).map(f=>f.name)])];
+    prepareData();
+    byId('uploadBox').classList.add('compact');byId('chooseBtn').textContent='Add more files';byId('clearBtn').classList.remove('hidden');byId('dashboard').classList.remove('hidden');
+    byId('loadedLine').innerHTML=`<b>${num(ALL.length)}</b> work order tasks from ${FILES.map(esc).join(', ')}${IMPORT.read>ALL.length?` (${num(IMPORT.read-ALL.length)} duplicates removed)`:''} · closed ${fmtDay(CLOSED_MIN)} – ${fmtDay(CLOSED_MAX)}${ODD_COUNT?` · <a href="#" onclick="switchTab('import');return false">${num(ODD_COUNT)} jobs with dates to check</a>`:''}`;
+    if(skipped.length){box.textContent='Not recognised and ignored: '+skipped.join(', ')+'. Expected a wm_task export with the columns listed above.';box.classList.remove('hidden')}
+    renderAll();
+  }catch(err){console.error(err);box.textContent=err.message;box.classList.remove('hidden')}
+}
+let ODD_COUNT=0;
+function checkDates(j){
+  const D=86400000,iss=[];
+  if(j.schedStart!=null&&j.closed!=null&&Math.abs(j.schedStart-j.closed)>365*D)iss.push(`Scheduled start ${j.schedStart<j.closed?'over a year before':'over a year after'} closing`);
+  if(j.estEnd!=null&&j.schedStart!=null&&j.estEnd<j.schedStart)iss.push('Estimated end before scheduled start');
+  else if(j.estEnd!=null&&j.closed!=null&&Math.abs(j.estEnd-j.closed)>365*D&&!iss.length)iss.push('Estimated end over a year from closing');
+  if(j.actStart!=null&&j.actEnd!=null&&j.actEnd<j.actStart)iss.push('Actual end before actual start');
+  else if(j.actStart!=null&&j.actEnd!=null&&j.actEnd-j.actStart>30*D)iss.push(`Work open ${Math.round((j.actEnd-j.actStart)/D)} days (start to end)`);
+  if(j.actStart!=null&&j.closed!=null&&j.actStart-j.closed>D)iss.push('Actual start after the job was closed');
+  return iss;
+}
+function prepareData(){
+  ALL.forEach(j=>j.issues=checkDates(j));ODD_COUNT=ALL.filter(j=>j.issues.length).length;
+  const cl=ALL.map(j=>j.closed).filter(x=>x!=null).sort((a,b)=>a-b);CLOSED_MIN=dayKey(cl[0]);CLOSED_MAX=dayKey(cl[cl.length-1]);
+  JOBS=ALL.filter(j=>j.day);const days=JOBS.filter(j=>!j.cancelled).map(j=>j.day).sort();
+  DATA_MIN=days[0]||'';DATA_MAX=days[days.length-1]||'';
+  // Default start: first month holding at least a quarter of a typical month's work (skips jobs worked long ago but closed in the export window)
+  const mc={};days.forEach(d=>{const k=d.slice(0,7);mc[k]=(mc[k]||0)+1});const peak=Math.max(...Object.values(mc));
+  const firstFull=Object.keys(mc).sort().find(k=>mc[k]>=peak*0.2);DEFAULT_FROM=firstFull?firstFull+'-01':DATA_MIN;if(DEFAULT_FROM<DATA_MIN)DEFAULT_FROM=DATA_MIN;
+  byId('fFrom').value=DEFAULT_FROM;byId('fTo').value=DATA_MAX;
+  const groups=[...new Set(JOBS.filter(j=>j.internal).map(j=>j.group))].sort();
+  const gc={};JOBS.filter(j=>j.internal&&!j.cancelled).forEach(j=>gc[j.group]=(gc[j.group]||0)+1);
+  let saved=null;try{saved=JSON.parse(localStorage.getItem('euGroupsOff')||'null')}catch(e){}
+  ALL_GROUPS=groups;GROUPS_ON=new Set(groups.filter(g=>!(Array.isArray(saved)&&saved.includes(g))));
+  byId('groupList').innerHTML=groups.map(g=>`<label><input type="checkbox" value="${esc(g)}" ${GROUPS_ON.has(g)?'checked':''}> ${esc(g)}<span class="cnt">${num(gc[g]||0)}</span></label>`).join('');
+  updateGroupBtn();
+  fillEngineers();
+}
+function groupOn(g){return GROUPS_ON.has(g)}
+function allGroupsOn(){return GROUPS_ON.size===ALL_GROUPS.length}
+function updateGroupBtn(){const n=GROUPS_ON.size,t=ALL_GROUPS.length;byId('groupBtnText').textContent=n===t?'All internal groups':n===0?'No groups selected':n===1?[...GROUPS_ON][0]:`${n} of ${t} groups`}
+function setGroups(on){GROUPS_ON=new Set(on);byId('groupList').querySelectorAll('input').forEach(i=>i.checked=GROUPS_ON.has(i.value));
+  try{localStorage.setItem('euGroupsOff',JSON.stringify(ALL_GROUPS.filter(g=>!GROUPS_ON.has(g))))}catch(e){}updateGroupBtn();fillEngineers();renderAll()}
+function fillEngineers(){const cur=byId('fEng').value;
+  const names=[...new Set(JOBS.filter(j=>j.internal&&j.eng&&groupOn(j.group)).map(j=>j.eng))].sort();
+  byId('fEng').innerHTML='<option value="">All engineers</option>'+names.map(n=>`<option>${esc(n)}</option>`).join('');byId('fEng').value=names.includes(cur)?cur:''}
+
+/* ============================================================ CALCULATION */
+function timingFlag(j){
+  if(j.actStart==null||j.actEnd==null)return'missing';const a=j.actual;if(a<=0)return'invalid';if(a<CFG.instantMin)return'instant';
+  const p=j.planWork||60;if(a>CFG.maxMin)return'overnight';if(dayKey(j.actStart)!==dayKey(j.actEnd)&&a>Math.max(240,p*CFG.overRatio))return'overnight';
+  if(a>CFG.overRatio*p&&a-p>CFG.overExtraMin)return'over';return'ok';
+}
+function blank(){return{jobs:0,inst:0,serv:0,days:new Set(),planMin:0,planInst:0,planServ:0,actMin:0,rawMin:0,flags:Object.fromEntries(FLAG_ORDER.map(k=>[k,0])),planOk:0,actOk:0,ontime:0,startN:0,cap:0,groups:{}}}
+function addJob(x,j,dayId){
+  x.jobs++;if(j.wtype==='install')x.inst++;else if(j.wtype==='service')x.serv++;x.days.add(dayId);
+  const plan=j.planWork+j.planTravel;x.planMin+=plan;if(j.wtype==='install')x.planInst+=plan;else if(j.wtype==='service')x.planServ+=plan;
+  x.actMin+=(j.flag==='ok'?j.actual:j.planWork)+j.travelUsed;x.rawMin+=(j.actual>0?j.actual:j.planWork)+j.travelUsed;
+  x.flags[j.flag]++;if(j.flag==='ok'){x.planOk+=j.planWork;x.actOk+=j.actual}
+  if(j.startVar!=null&&dayKey(j.actStart)===dayKey(j.schedStart)){x.startN++;if(Math.abs(j.startVar)<=CFG.ontime)x.ontime++}
+  x.groups[j.group]=(x.groups[j.group]||0)+1;
+}
+function finish(x){x.dayCount=x.days.size;x.planUtil=x.cap?x.planMin/x.cap:null;x.actUtil=x.cap?x.actMin/x.cap:null;x.rawUtil=x.cap?x.rawMin/x.cap:null;
+  x.quality=x.jobs?x.flags.ok/x.jobs:null;x.ratio=x.planOk?x.actOk/x.planOk:null;x.ontimeR=x.startN?x.ontime/x.startN:null;
+  x.flagged=x.jobs-x.flags.ok;x.instShare=x.inst+x.serv?x.inst/(x.inst+x.serv):null;return x}
+function aggregate(jobs,from,to){
+  const E=new Map(),T=blank(),wd=weekdaysBetween(from,to);
+  for(const j of jobs){let e=E.get(j.eng);if(!e){e=blank();e.name=j.eng;E.set(j.eng,e)}addJob(e,j,j.day);addJob(T,j,j.eng+'|'+j.day)}
+  for(const e of E.values()){e.cap=(CFG.basis==='weekdays'?wd:e.days.size)*CFG.shift;e.group=Object.entries(e.groups).sort((a,b)=>b[1]-a[1])[0][0];finish(e)}
+  T.cap=[...E.values()].reduce((a,e)=>a+e.cap,0);T.engineers=E.size;finish(T);T.jobsPerDay=T.dayCount?T.jobs/T.dayCount:null;T.wd=wd;
+  return{E,T};
+}
+function readSettings(){
+  CFG.target=Math.max(.1,(+byId('sTarget').value||80)/100);CFG.shift=Math.max(60,+byId('sShift').value||500);CFG.basis=byId('sBasis').value;CFG.travel=byId('sTravel').value;
+  CFG.instantMin=Math.max(1,+byId('sInstant').value||5);CFG.overRatio=Math.max(1.2,+byId('sOver').value||2);CFG.ontime=Math.max(5,+byId('sOntime').value||30);
+}
+function utilJobs(from,to){const e=byId('fEng').value;
+  return JOBS.filter(j=>!j.cancelled&&j.internal&&j.eng&&j.day>=from&&j.day<=to&&groupOn(j.group)&&(!e||j.eng===e))}
+function compute(){
+  readSettings();const from=byId('fFrom').value||DATA_MIN,to=byId('fTo').value||DATA_MAX;
+  JOBS.forEach(j=>{j.flag=timingFlag(j);j.travelUsed=CFG.travel==='actual'&&j.actTravel!=null&&j.actTravel>0&&j.actTravel<=CFG.maxTravel?j.actTravel:j.planTravel});
+  const jobs=utilJobs(from,to),all=aggregate(jobs,from,to);
+  const byP={};jobs.forEach(j=>{const k=periodKey(j.day,GRAN);(byP[k]=byP[k]||[]).push(j)});
+  const keys=periodKeysBetween(from,to,GRAN);
+  const periods=keys.map(k=>{const b=periodBounds(k,GRAN),pf=b.from<from?from:b.from,pt=b.to>to?to:b.to;const a=aggregate(byP[k]||[],pf,pt);
+    return{key:k,label:periodLabel(k,GRAN),from:pf,to:pt,partial:pf!==b.from||pt!==b.to||pt>DATA_MAX||pf<DATA_MIN,agg:a,...a.T}});
+  const top=Math.max(0,...periods.map(p=>p.jobs));periods.forEach(p=>p.sparse=periods.length>1&&p.jobs>0&&p.jobs<top*0.2);
+  // previous equal-length range, if the data covers it
+  const len=Math.round((dms(to)-dms(from))/86400000)+1,pto=addDays(from,-1),pfrom=addDays(from,-len);
+  const prev=pfrom>=DEFAULT_FROM?aggregate(utilJobs(pfrom,pto),pfrom,pto).T:null;
+  const contractors=JOBS.filter(j=>!j.cancelled&&!j.internal&&j.day>=from&&j.day<=to&&allGroupsOn()).length;
+  const cancelled=JOBS.filter(j=>j.cancelled&&j.internal&&j.day>=from&&j.day<=to&&groupOn(j.group)&&(!byId('fEng').value||j.eng===byId('fEng').value)).length;
+  const groupAgg=[...new Set(jobs.map(j=>j.group))].map(g=>{const a=aggregate(jobs.filter(j=>j.group===g),from,to);return{group:g,...a.T}});
+  const contractorGroups={};JOBS.filter(j=>!j.cancelled&&!j.internal&&j.day>=from&&j.day<=to).forEach(j=>{const k=j.group||'(no group)';contractorGroups[k]=(contractorGroups[k]||0)+1});
+  const dAll={};JOBS.forEach(j=>{if(j.cancelled||j.day<from||j.day>to)return;const k=periodKey(j.day,GRAN),x=dAll[k]=dAll[k]||{inst:0,serv:0,planInst:0,planServ:0,con:0};const pl=j.planWork+j.planTravel;
+    if(j.wtype==='install'){x.inst++;x.planInst+=pl}else if(j.wtype==='service'){x.serv++;x.planServ+=pl}if(!j.internal)x.con++});
+  periods.forEach(p=>p.all=dAll[p.key]||{inst:0,serv:0,planInst:0,planServ:0,con:0});
+  return{from,to,jobs,all,periods,prev,prevRange:prev?{from:pfrom,to:pto}:null,contractors,cancelled,groupAgg,contractorGroups};
+}
+
+/* ============================================================ CHARTS */
+const valueLabels={id:'valueLabels',afterDatasetsDraw(chart,args,opts){
+  if(!opts||!opts.fmt)return;const ctx=chart.ctx,horiz=chart.options.indexAxis==='y';ctx.save();ctx.font='600 11px "Segoe UI", Arial';
+  chart.data.datasets.forEach((ds,di)=>{const meta=chart.getDatasetMeta(di);if(meta.hidden)return;meta.data.forEach((el,i)=>{const v=ds.data[i];if(v==null||!isFinite(v)||v===0)return;const t=opts.fmt(v,i,di);if(!t)return;
+    if(opts.inside&&meta.type==='bar'){const w=horiz?Math.abs(el.x-el.base):Math.abs(el.y-el.base);if(w<26)return;ctx.fillStyle='#fff';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(t,horiz?(el.x+el.base)/2:el.x,horiz?el.y:(el.y+el.base)/2);return}
+    ctx.fillStyle=TH.label;ctx.textBaseline='middle';if(horiz){ctx.textAlign='left';ctx.fillText(t,el.x+5,el.y)}else{ctx.textAlign='center';ctx.fillText(t,el.x,el.y-11)}})});ctx.restore()}};
+const targetLine={id:'targetLine',afterDatasetsDraw(chart,args,opts){if(!opts||opts.value==null)return;const s=chart.options.indexAxis==='y'?chart.scales.x:chart.scales.y;if(!s)return;const a=chart.chartArea,ctx=chart.ctx;
+  const p=s.getPixelForValue(opts.value);ctx.save();ctx.strokeStyle=C.target;ctx.setLineDash([6,4]);ctx.lineWidth=1.5;ctx.beginPath();
+  if(chart.options.indexAxis==='y'){ctx.moveTo(p,a.top);ctx.lineTo(p,a.bottom)}else{ctx.moveTo(a.left,p);ctx.lineTo(a.right,p)}ctx.stroke();
+  ctx.setLineDash([]);ctx.fillStyle=C.target;ctx.font='600 11px "Segoe UI", Arial';ctx.textAlign='right';ctx.fillText('Target '+opts.value+'%',chart.options.indexAxis==='y'?p-4:a.right,chart.options.indexAxis==='y'?a.top+8:p-6);ctx.restore()}};
+if(window.Chart){Chart.register(valueLabels,targetLine);Chart.defaults.font.family='"Segoe UI", Calibri, Arial, sans-serif'}
+function mk(id,cfg){if(charts[id])charts[id].destroy();const el=byId(id);if(el&&window.Chart)charts[id]=new Chart(el,cfg)}
+function deepMerge(a,b){for(const k in b){if(b[k]&&typeof b[k]==='object'&&!Array.isArray(b[k])&&typeof b[k]!=='function')a[k]=deepMerge(a[k]&&typeof a[k]==='object'?a[k]:{},b[k]);else a[k]=b[k]}return a}
+function opts(extra){return deepMerge({responsive:true,maintainAspectRatio:false,animation:PRINTING?false:{duration:250},devicePixelRatio:PRINTING?2.5:(window.devicePixelRatio||1),layout:{padding:{top:18,right:40,left:4,bottom:2}},
+  plugins:{legend:{display:true,position:'top',labels:{boxWidth:12,font:{size:11}}},tooltip:{mode:'index',intersect:false}},
+  scales:{x:{grid:{display:false},ticks:{maxRotation:45,autoSkip:true}},y:{beginAtZero:true,grid:{color:TH.grid}}}},extra)}
+
+/* ============================================================ TABLES */
+const TBL={};
+function table(id,cols,data,o={}){
+  TBL[id]=TBL[id]||{sort:o.defaultSort||null};TBL[id].args=[cols,data,o];const st=TBL[id].sort;let rows=[...data];
+  if(st){const c=cols.find(c=>c.key===st.key);if(c){const v=r=>c.sortVal?c.sortVal(r):r[c.key];rows.sort((a,b)=>{const x=v(a),y=v(b);if(x==null||x==='')return 1;if(y==null||y==='')return -1;return(x>y?1:x<y?-1:0)*st.dir})}}
+  const cell=(c,r)=>{const v=r[c.key];return`<td class="${c.num?'num':''} ${c.rag?c.rag(v,r):''}">${c.fmt?c.fmt(v,r):esc(v)}</td>`};
+  let body=rows.map((r,i)=>`<tr ${o.onRow?`class="click" data-i="${data.indexOf(r)}"`:''}>${cols.map(c=>cell(c,r)).join('')}</tr>`).join('');
+  if(o.total)body+=`<tr class="total">${cols.map(c=>cell(c,o.total)).join('')}</tr>`;
+  if(!rows.length)body=`<tr><td colspan="${cols.length}" class="muted">Nothing in the current selection.</td></tr>`;
+  const el=byId(id);el.innerHTML=`<table><thead><tr>${cols.map(c=>`<th data-k="${c.key}" class="${c.num?'num':''}" title="${esc(c.title||'')}">${c.label}${st&&st.key===c.key?`<span class="arr">${st.dir>0?'▲':'▼'}</span>`:''}</th>`).join('')}</tr></thead><tbody>${body}</tbody></table>`;
+  if(!o.nosort)el.querySelectorAll('th').forEach(th=>th.onclick=()=>{const k=th.dataset.k,s=TBL[id].sort,c=cols.find(c=>c.key===k);TBL[id].sort={key:k,dir:s&&s.key===k?-s.dir:(c.num?-1:1)};table(id,...TBL[id].args)});
+  if(o.onRow)el.querySelectorAll('tr.click').forEach(tr=>tr.onclick=()=>o.onRow(data[+tr.dataset.i]));
+}
+function ragUtil(v){if(v==null)return'';const t=CFG.target;return v>1.05?'rag-p':v>=t?'rag-g':v>=t-.15?'rag-a':'rag-r'}
+const ragQ=v=>v==null?'':v>=.8?'rag-g':v>=.6?'rag-a':'rag-r';
+const ragOn=v=>v==null?'':v>=.7?'rag-g':v>=.4?'rag-a':'rag-r';
+const kpiCls=c=>c?c.replace('rag-',''):'';
+function kpis(id,items){byId(id).innerHTML=items.map(k=>`<div class="card kpi ${k.cls||''}"><div class="label">${k.label}</div><div class="value">${k.value}</div>${k.sub?`<div class="sub">${k.sub}</div>`:''}</div>`).join('')}
+function delta(cur,prev,label){if(cur==null||prev==null)return'';const d=(cur-prev)*100;if(Math.abs(d)<0.05)return`<span class="delta">→ level</span> vs ${label}`;return`<span class="delta ${d>0?'up':'down'}">${d>0?'▲':'▼'} ${Math.abs(d).toFixed(1)} pts</span> vs ${label}`}
+
+/* ============================================================ RENDER */
+function renderAll(){
+  if(!JOBS.length)return;VIEW=compute();const V=VIEW,T=V.all.T,P=V.periods,eng=byId('fEng').value,grp=allGroupsOn()?'':GROUPS_ON.size<=2?[...GROUPS_ON].join(' + ')||'No groups':`${GROUPS_ON.size} of ${ALL_GROUPS.length} groups`;
+  const gname={year:'year',month:'month',week:'week'}[GRAN];
+  byId('periodLine').textContent=`${fmtDay(V.from)} – ${fmtDay(V.to)} · by ${gname}${grp?' · '+grp:''}${eng?' · '+eng:''}`;
+  const prevLbl=V.prevRange?`previous ${Math.round((dms(V.to)-dms(V.from))/86400000)+1} days`:'';
+  byId('scopeNote').innerHTML=(eng?`<span class="eng-chip">${esc(eng)} <button title="Show all engineers" onclick="clearEngineer()">×</button></span> &nbsp;`:'')+
+    `<b>${num(T.jobs)}</b> internal engineer jobs (cancelled excluded) by <b>${num(T.engineers)}</b> engineer${T.engineers===1?'':'s'} over ${num(T.wd)} weekdays.`+
+    (V.contractors?` ${num(V.contractors)} contractor jobs are excluded from utilisation (see Groups).`:'')+
+    (DEFAULT_FROM>DATA_MIN&&V.from>DATA_MIN?` ${num(JOBS.filter(j=>!j.cancelled&&j.day<V.from).length)} earlier jobs sit before the From date (mostly worked long before but closed in this export).`:'')+
+    (V.prev?'':` <span class="note">No comparison: the data doesn't cover the equivalent earlier period.</span>`)+` <a href="#" class="no-print" onclick="switchTab('import');return false">How the ${num(ALL.length)} export rows reconcile →</a>`;
+  kpis('kpiUtil',[
+    {label:'Actual Utilisation',value:pct(T.actUtil),sub:delta(T.actUtil,V.prev&&V.prev.actUtil,prevLbl)||`${hrs(T.actMin)}h of ${hrs(T.cap)}h capacity`,cls:kpiCls(ragUtil(T.actUtil))},
+    {label:'Planned Utilisation',value:pct(T.planUtil),sub:delta(T.planUtil,V.prev&&V.prev.planUtil,prevLbl)||`${hrs(T.planMin)}h scheduled`,cls:kpiCls(ragUtil(T.planUtil))},
+    {label:'Gap to Target',value:T.actUtil==null?'–':((T.actUtil-CFG.target)*100>0?'+':'')+((T.actUtil-CFG.target)*100).toFixed(1)+' pts',sub:`Target ${Math.round(CFG.target*100)}% · ${T.actUtil!=null&&T.actUtil<CFG.target?hrs((CFG.target*T.cap)-T.actMin)+'h of spare capacity':'at or above target'}`,cls:T.actUtil==null?'':T.actUtil>=CFG.target?'g':'a'},
+    {label:'Recorded (raw) Utilisation',value:pct(T.rawUtil),sub:'Timestamps taken at face value'},
+    {label:'Time Capture Quality',value:pct(T.quality),sub:`${num(T.flagged)} of ${num(T.jobs)} jobs flagged`,cls:kpiCls(ragQ(T.quality))},
+    {label:'Actual ÷ Planned Work',value:T.ratio==null?'–':pct(T.ratio,0),sub:'On jobs with believable timings'}]);
+  kpis('kpiWork',[
+    {label:'Jobs',value:num(T.jobs),sub:`${num(T.inst)} installs · ${num(T.serv)} service${T.jobs-T.inst-T.serv?` · ${num(T.jobs-T.inst-T.serv)} other`:''}`},
+    {label:'Install / Service Split',value:T.instShare==null?'–':`${Math.round(T.instShare*100)} / ${100-Math.round(T.instShare*100)}`,sub:`by hours ${T.planMin?Math.round(T.planInst/T.planMin*100):0} / ${T.planMin?Math.round(T.planServ/T.planMin*100):0}`},
+    {label:'Planned Hours',value:hrs(T.planMin),sub:'Work + travel'},{label:'Actual Hours',value:hrs(T.actMin),sub:'Cleaned'},
+    {label:'Capacity Hours',value:hrs(T.cap),sub:`${num(T.dayCount)} engineer-days × ${(CFG.shift/60).toFixed(1)}h`+(CFG.basis==='weekdays'?' (all weekdays)':'')},
+    {label:'Jobs per Engineer-Day',value:T.jobsPerDay==null?'–':T.jobsPerDay.toFixed(2),sub:'On days with jobs'},
+    {label:'On-time Start',value:pct(T.ontimeR),sub:`Within ±${CFG.ontime} min of schedule`,cls:kpiCls(ragOn(T.ontimeR))},
+    {label:'Cancelled Jobs',value:num(V.cancelled),sub:'Excluded from utilisation'}]);
+  renderTrends(V);renderDemand(V);renderPeriodTable(V);renderEngineers(V);renderHeat();renderGroups(V);renderQuality(V);renderImport(V);
+}
+function trendLabels(P){return P.map(p=>p.label+(p.partial?'*':'')+(p.sparse?'†':''))}
+function renderTrends(V){
+  const P=V.periods,L=trendLabels(P),many=P.length>18,g=GRAN==='year'?'Year':GRAN==='month'?'Month':'Week';
+  byId('utilTrendTitle').textContent=`Utilisation by ${g}`;byId('hoursTrendTitle').textContent=`Planned Hours vs Capacity by ${g}`;
+  const u=k=>P.map(p=>p[k]==null||p.sparse?null:+(p[k]*100).toFixed(1));
+  mk('utilTrend',{type:'line',data:{labels:L,datasets:[
+      {label:'Planned',data:u('planUtil'),borderColor:C.plan,backgroundColor:C.plan,borderWidth:3,tension:.25,pointRadius:3,spanGaps:true},
+      {label:'Actual (cleaned)',data:u('actUtil'),borderColor:C.act,backgroundColor:C.act,borderWidth:3,tension:.25,pointRadius:4,spanGaps:true}]},
+    options:opts({plugins:{targetLine:{value:Math.round(CFG.target*100)},valueLabels:{fmt:(v,i,di)=>many||di!==1?'':v.toFixed(0)+'%'},
+      tooltip:{callbacks:{label:c=>`${c.dataset.label}: ${c.raw}%`,footer:it=>{const p=P[it[0].dataIndex];return`${p.engineers} engineers · ${num(p.jobs)} jobs · quality ${pct(p.quality,0)}`}}}},
+      scales:{y:{suggestedMax:Math.max(100,Math.round(CFG.target*100)+10),title:{display:true,text:'Utilisation %'}}}})});
+  mk('hoursTrend',{type:'bar',data:{labels:L,datasets:[
+      {type:'bar',label:'Planned install h',data:P.map(p=>Math.round(p.planInst/60)),backgroundColor:C.inst,stack:'h',order:2},
+      {type:'bar',label:'Planned service h',data:P.map(p=>Math.round(p.planServ/60)),backgroundColor:C.serv,stack:'h',order:2},
+      {type:'line',label:'Capacity h',data:P.map(p=>Math.round(p.cap/60)),borderColor:C.cap,backgroundColor:C.cap,borderDash:[5,4],pointRadius:2,tension:.2,order:1},
+      {type:'line',label:'Actual h',data:P.map(p=>Math.round(p.actMin/60)),borderColor:C.a,backgroundColor:C.a,pointRadius:3,tension:.2,order:1}]},
+    options:opts({plugins:{valueLabels:{inside:true,fmt:(v,i,di)=>many||di>1?'':num(v)}},scales:{x:{stacked:true},y:{stacked:true,title:{display:true,text:'Hours'}}}})});
+}
+function renderDemand(V){
+  const P=V.periods,L=trendLabels(P),many=P.length>18,hours=byId('dMeasure').value==='hours',all=byId('dScope').value==='all',g=GRAN==='year'?'Year':GRAN==='month'?'Month':'Week';
+  const src=p=>all?p.all:p,iv=p=>hours?Math.round(src(p).planInst/60):src(p).inst,sv=p=>hours?Math.round(src(p).planServ/60):src(p).serv;
+  const I=P.map(iv),S=P.map(sv),unit=hours?'planned hours':'jobs';
+  byId('demandTitle').textContent=`Demand by ${g}: Installations vs Service (${unit})`;
+  const ti=I.reduce((a,b)=>a+b,0),ts=S.reduce((a,b)=>a+b,0),full=P.map((p,i)=>i).filter(i=>!P[i].partial&&!P[i].sparse);
+  const avg=a=>full.length?Math.round(full.reduce((s,i)=>s+a[i],0)/full.length):null;
+  const ni=hours?'install hours':'installs',ns=hours?'service hours':'service';byId('demandSummary').textContent=`Total ${num(ti)} ${ni} · ${num(ts)} ${ns}${ti+ts?` (${Math.round(ti/(ti+ts)*100)} / ${Math.round(ts/(ti+ts)*100)})`:''}${avg(I)!=null?` · average per full ${GRAN}: ${num(avg(I))} ${ni}, ${num(avg(S))} ${ns}`:''}`;
+  mk('demandTrend',{type:'line',data:{labels:L,datasets:[
+      {label:hours?'Install hours':'Installations',data:I,borderColor:C.inst,backgroundColor:C.inst,borderWidth:3,tension:.25,pointRadius:4},
+      {label:hours?'Service hours':'Service visits',data:S,borderColor:C.serv,backgroundColor:C.serv,borderWidth:3,tension:.25,pointRadius:4},
+      {label:'Total',data:P.map((p,i)=>I[i]+S[i]),borderColor:C.cap,backgroundColor:C.cap,borderDash:[5,4],borderWidth:2,tension:.25,pointRadius:2}]},
+    options:opts({plugins:{valueLabels:{fmt:(v,i,di)=>many||di===2?'':num(v)},tooltip:{callbacks:{footer:it=>{const i=it[0].dataIndex,t=I[i]+S[i];return t?`Install share ${Math.round(I[i]/t*100)}%${all&&P[i].all.con?` · ${num(P[i].all.con)} contractor jobs`:''}`:''}}}},
+      scales:{y:{title:{display:true,text:hours?'Planned hours (work + travel)':'Jobs'}}}})});
+  byId('demandNote').textContent=(all?'All non-cancelled work in the date range, internal and contractor; the group and engineer filters don\'t apply. ':'Internal engineer jobs matching the current groups and engineer. ')+
+    'Installs = column B starting VH, service = CS; cancelled jobs excluded.'+(P.some(p=>p.partial)?' * partial period, so expect a lower figure.':'')+(P.some(p=>p.sparse)?' † low-volume period.':'');
+}
+const pc0=v=>pct(v,0);
+function renderPeriodTable(V){
+  const g=GRAN==='year'?'Year':GRAN==='month'?'Month':'Week';byId('periodTableTitle').textContent=`By ${g}`;
+  const rows=V.periods.map(p=>({...p}));
+  TBL.periodTable=TBL.periodTable&&TBL.periodTable.gran===GRAN?TBL.periodTable:{sort:{key:'label',dir:1},gran:GRAN};
+  table('periodTable',[
+    {key:'label',label:g,sortVal:r=>r.key||'~',fmt:(v,r)=>esc(v)+(r.partial?' <span class="muted" title="Partial period">*</span>':'')+(r.sparse?' <span class="muted" title="Low volume">†</span>':'')},
+    {key:'engineers',label:'Engineers',num:1},{key:'jobs',label:'Jobs',num:1,fmt:num},{key:'inst',label:'Installs',num:1,fmt:num},{key:'serv',label:'Service',num:1,fmt:num},
+    {key:'dayCount',label:'Engineer-days',num:1,fmt:num},{key:'planMin',label:'Planned h',num:1,fmt:hrs},{key:'actMin',label:'Actual h',num:1,fmt:hrs},{key:'cap',label:'Capacity h',num:1,fmt:hrs},
+    {key:'planUtil',label:'Planned util',num:1,fmt:pc0,rag:(v,r)=>r.sparse?'muted':ragUtil(v)},{key:'actUtil',label:'Actual util',num:1,fmt:pc0,rag:(v,r)=>r.sparse?'muted':ragUtil(v)},
+    {key:'rawUtil',label:'Raw util',num:1,fmt:pc0},{key:'quality',label:'Capture quality',num:1,fmt:pc0,rag:(v,r)=>r.sparse?'muted':ragQ(v)},
+    {key:'ontimeR',label:'On-time start',num:1,fmt:pc0,rag:(v,r)=>r.sparse?'muted':ragOn(v)},{key:'jobsPerDay',label:'Jobs / eng-day',num:1,fmt:(v,r)=>r.dayCount?(r.jobs/r.dayCount).toFixed(2):'–',sortVal:r=>r.dayCount?r.jobs/r.dayCount:null}],
+    rows,{total:{...VIEW.all.T,label:'Whole range',key:'',engineers:VIEW.all.T.engineers}});
+  const P=V.periods;byId('periodNote').textContent=[P.some(p=>p.partial)?'* Partial period: only part of it is inside the date range or the data.':'',P.some(p=>p.sparse)?'† Low-volume period (under a fifth of the busiest one), left off the trend line.':'',
+    `Capacity: ${CFG.basis==='weekdays'?'every weekday':'days each engineer had jobs'} × ${CFG.shift} min.`].filter(Boolean).join(' ');
+}
+function renderEngineers(V){
+  const L=[...V.all.E.values()];
+  table('engTable',[
+    {key:'name',label:'Engineer'},{key:'group',label:'Group'},{key:'jobs',label:'Jobs',num:1},{key:'inst',label:'Installs',num:1},{key:'serv',label:'Service',num:1},
+    {key:'dayCount',label:'Days',num:1},{key:'planMin',label:'Planned h',num:1,fmt:hrs},{key:'actMin',label:'Actual h',num:1,fmt:hrs},{key:'cap',label:'Capacity h',num:1,fmt:hrs},
+    {key:'planUtil',label:'Planned util',num:1,fmt:pc0,rag:ragUtil},{key:'actUtil',label:'Actual util',num:1,fmt:pc0,rag:ragUtil},{key:'rawUtil',label:'Raw util',num:1,fmt:pc0},
+    {key:'quality',label:'Capture quality',num:1,fmt:pc0,rag:ragQ},{key:'ontimeR',label:'On-time',num:1,fmt:pc0,rag:ragOn},
+    {key:'jpd',label:'Jobs/day',num:1,fmt:(v,r)=>r.dayCount?(r.jobs/r.dayCount).toFixed(1):'–',sortVal:r=>r.dayCount?r.jobs/r.dayCount:null}],
+    L,{defaultSort:{key:'actUtil',dir:-1},total:{...V.all.T,name:'All engineers',group:''},onRow:e=>{byId('fEng').value=e.name;switchTab('overview');renderAll()}});
+  const s=[...L].sort((a,b)=>(b.actUtil||0)-(a.actUtil||0));byId('engRankWrap').style.height=Math.max(300,s.length*22+70)+'px';
+  mk('engRank',{type:'bar',data:{labels:s.map(e=>e.name),datasets:[{label:'Actual utilisation',data:s.map(e=>+((e.actUtil||0)*100).toFixed(1)),backgroundColor:s.map(e=>({'rag-g':C.g,'rag-a':C.a,'rag-r':C.r,'rag-p':C.p})[ragUtil(e.actUtil)]||C.x),borderRadius:3,maxBarThickness:18}]},
+    options:opts({indexAxis:'y',layout:{padding:{right:46,top:14}},plugins:{legend:{display:false},targetLine:{value:Math.round(CFG.target*100)},valueLabels:{fmt:v=>v.toFixed(0)+'%'},
+      tooltip:{mode:'nearest',intersect:true,callbacks:{afterLabel:c=>{const e=s[c.dataIndex];return[`Planned ${pct(e.planUtil,0)} · raw ${pct(e.rawUtil,0)}`,`${e.jobs} jobs over ${e.dayCount} days`,`Capture quality ${pct(e.quality,0)}`]}}}},
+      scales:{x:{beginAtZero:true,suggestedMax:110,grid:{color:TH.grid},title:{display:true,text:'%'}},y:{grid:{display:false},ticks:{autoSkip:false,font:{size:11}}}}})});
+}
+function renderHeat(){
+  if(!VIEW)return;const V=VIEW,P=V.periods,metric=byId('hMetric').value,sort=byId('hSort').value;
+  const g=GRAN==='year'?'Year':GRAN==='month'?'Month':'Week';byId('heatTitle').textContent=`Engineer × ${g}`;
+  let E=[...V.all.E.values()];
+  if(sort==='name')E.sort((a,b)=>a.name.localeCompare(b.name));else if(sort==='high')E.sort((a,b)=>(b[metric==='hours'?'actMin':metric]||0)-(a[metric==='hours'?'actMin':metric]||0));
+  else if(sort==='low')E.sort((a,b)=>(a[metric==='hours'?'actMin':metric]||0)-(b[metric==='hours'?'actMin':metric]||0));else E.sort((a,b)=>a.group.localeCompare(b.group)||a.name.localeCompare(b.name));
+  const val=(x)=>!x?null:metric==='hours'?x.actMin:x[metric];
+  const fmt=v=>v==null?'':metric==='jobs'?num(v):metric==='hours'?hrs(v):pct(v,0);
+  const cls=(v,x)=>v==null?'rag-x':metric==='jobs'||metric==='hours'?'':metric==='quality'?ragQ(v):ragUtil(v);
+  const head=`<tr><th class="name">Engineer</th><th>Group</th>${P.map(p=>`<th class="num" title="${fmtDay(p.from)} – ${fmtDay(p.to)}">${esc(p.label)}${p.partial?'*':''}</th>`).join('')}<th class="num">Whole range</th></tr>`;
+  const body=E.map(e=>`<tr><td class="name"><b>${esc(e.name)}</b></td><td class="grp">${esc(e.group)}</td>${P.map(p=>{const x=p.agg.E.get(e.name);const v=val(x);return`<td class="${cls(v,x)}" title="${x?`${x.jobs} jobs · ${x.dayCount} days`:'No jobs'}">${fmt(v)}</td>`}).join('')}<td class="num ${cls(val(e),e)}">${fmt(val(e))}</td></tr>`).join('');
+  const tot=`<tr class="total"><td class="name">All engineers</td><td></td>${P.map(p=>{const v=val(p.agg.T.jobs?p.agg.T:null);return`<td>${fmt(v)}</td>`}).join('')}<td>${fmt(val(V.all.T))}</td></tr>`;
+  byId('heatTable').innerHTML=`<table><thead>${head}</thead><tbody>${body}${tot}</tbody></table>`;
+  byId('heatCount').textContent=`${E.length} engineers · ${P.length} ${GRAN}s`;byId('heatPrintMetric').textContent='Showing: '+byId('hMetric').selectedOptions[0].text+' · sorted by '+byId('hSort').selectedOptions[0].text.toLowerCase();
+}
+function renderGroups(V){
+  const G=[...V.groupAgg].sort((a,b)=>(b.actUtil||0)-(a.actUtil||0));byId('groupWrap').style.height=(PRINTING?Math.max(220,G.length*26+70):Math.max(320,G.length*42+80))+'px';
+  mk('groupChart',{type:'bar',data:{labels:G.map(g=>g.group),datasets:[{label:'Planned',data:G.map(g=>+((g.planUtil||0)*100).toFixed(1)),backgroundColor:C.plan,borderRadius:3},{label:'Actual (cleaned)',data:G.map(g=>+((g.actUtil||0)*100).toFixed(1)),backgroundColor:C.act,borderRadius:3}]},
+    options:opts({indexAxis:'y',plugins:{targetLine:{value:Math.round(CFG.target*100)},valueLabels:{fmt:v=>v.toFixed(0)+'%'},tooltip:{mode:'index'}},scales:{x:{beginAtZero:true,suggestedMax:110,grid:{color:TH.grid}},y:{grid:{display:false},ticks:{autoSkip:false}}}})});
+  table('groupTable',[{key:'group',label:'Group'},{key:'engineers',label:'Engineers',num:1},{key:'jobs',label:'Jobs',num:1,fmt:num},{key:'inst',label:'Installs',num:1,fmt:num},{key:'serv',label:'Service',num:1,fmt:num},
+    {key:'planUtil',label:'Planned util',num:1,fmt:pc0,rag:ragUtil},{key:'actUtil',label:'Actual util',num:1,fmt:pc0,rag:ragUtil},{key:'quality',label:'Capture quality',num:1,fmt:pc0,rag:ragQ},{key:'ontimeR',label:'On-time',num:1,fmt:pc0,rag:ragOn}],
+    G,{defaultSort:{key:'jobs',dir:-1}});
+  const cg=Object.entries(V.contractorGroups).sort((a,b)=>b[1]-a[1]);
+  byId('contractorNote').innerHTML=cg.length?`Contractor jobs in this range (not in utilisation): ${cg.slice(0,8).map(([k,v])=>`${esc(k)} ${num(v)}`).join(' · ')}${cg.length>8?' · …':''}.`:'';
+}
+function renderQuality(V){
+  const T=V.all.T,f=T.flags;
+  kpis('kpiDQ',[{label:'Plausible Timings',value:pct(T.quality),sub:`${num(f.ok)} of ${num(T.jobs)} jobs`,cls:kpiCls(ragQ(T.quality))},
+    {label:'Over-run (late close)',value:num(f.over),sub:pct(f.over/(T.jobs||1),0)+' of jobs'},{label:'Next-day / >12h',value:num(f.overnight),sub:pct(f.overnight/(T.jobs||1),0)+' of jobs'},
+    {label:'Instant Close',value:num(f.instant),sub:pct(f.instant/(T.jobs||1),0)+' of jobs'},{label:'No / Invalid Times',value:num(f.missing+f.invalid),sub:pct((f.missing+f.invalid)/(T.jobs||1),0)+' of jobs'},
+    {label:'Hours Corrected',value:hrs(Math.max(0,T.rawMin-T.actMin)),sub:'Raw minus cleaned actual'}]);
+  const P=V.periods,L=trendLabels(P),g=GRAN==='year'?'Year':GRAN==='month'?'Month':'Week';byId('dqTrendTitle').textContent=`Timing Quality by ${g}`;
+  mk('dqTrend',{type:'bar',data:{labels:L,datasets:FLAG_ORDER.map(k=>({label:FLAGS[k].label,data:P.map(p=>p.jobs?+(p.flags[k]/p.jobs*100).toFixed(1):0),backgroundColor:FLAGS[k].color,stack:'q'}))},
+    options:opts({plugins:{valueLabels:{inside:true,fmt:v=>P.length>18||v<8?'':v.toFixed(0)+'%'}},scales:{x:{stacked:true},y:{stacked:true,max:100,title:{display:true,text:'% of jobs'}}}})});
+  byId('flagLegend').innerHTML=[
+    ['ok','Recorded work time looks believable and is used as the actual.'],
+    ['over',`More than ${CFG.overRatio}× the planned work time and over an hour longer: usually closed some time after leaving site.`],
+    ['overnight',`Over ${CFG.maxMin/60} hours, or ending on a later day: closed the next day or later.`],
+    ['instant',`Under ${CFG.instantMin} minutes: start and end both entered at closure, after the fact.`],
+    ['invalid','End time at or before the start time.'],['missing','Actual work start or end is blank.']].map(([k,d])=>`<li><span class="sw" style="background:${FLAGS[k].color}"></span><b>${FLAGS[k].label}</b>: ${d}</li>`).join('')+
+    `<li style="list-style:none;margin-top:6px;color:var(--muted)">${pct(V.jobs.filter(j=>j.actStart!=null&&j.manualStart).length/(V.jobs.filter(j=>j.actStart!=null).length||1),0)} of start times are whole minutes (typed in by hand). End times are stamped by the system at closure.</li>`;
+  const qf=byId('qFlag'),qe=byId('qEng'),pf=qf.value,pe=qe.value,fl=V.jobs.filter(j=>j.flag!=='ok');
+  qf.innerHTML='<option value="">All flags</option>'+FLAG_ORDER.slice(1).map(k=>`<option value="${k}">${FLAGS[k].label} (${fl.filter(j=>j.flag===k).length})</option>`).join('');qf.value=pf;
+  const names=[...new Set(fl.map(j=>j.eng))].sort();qe.innerHTML='<option value="">All engineers</option>'+names.map(n=>`<option>${esc(n)}</option>`).join('');qe.value=names.includes(pe)?pe:'';
+  renderFlagged();
+}
+function renderFlagged(){
+  if(!VIEW)return;const f=byId('qFlag').value,e=byId('qEng').value,q=lower(byId('qSearch').value);
+  const rows=VIEW.jobs.filter(j=>j.flag!=='ok'&&(!f||j.flag===f)&&(!e||j.eng===e)&&(!q||lower(j.number+' '+j.eng+' '+j.group).includes(q))).map(j=>({...j,excess:j.actual!=null?j.actual-j.planWork:null}));
+  byId('qCount').textContent=num(rows.length)+' jobs';byId('qPrintNote').textContent=rows.length>50?`First 50 of ${num(rows.length)} flagged jobs shown, in the table's current order. Use "Flagged jobs CSV" for the full list.`:'';
+  table('qTable',[{key:'number',label:'WOT'},{key:'eng',label:'Engineer'},{key:'group',label:'Group'},{key:'wtype',label:'Type',fmt:v=>v==='install'?'Install':v==='service'?'Service':'Other'},
+    {key:'schedStart',label:'Scheduled',fmt:fmtDT},{key:'planWork',label:'Planned',num:1,fmt:mins},{key:'actStart',label:'Actual start',fmt:(v,r)=>fmtDT(v)+(r.manualStart?' <span class="muted" title="Typed in by hand">✎</span>':'')},
+    {key:'actEnd',label:'Actual end',fmt:fmtDT},{key:'actual',label:'Recorded',num:1,fmt:mins},{key:'excess',label:'vs plan',num:1,fmt:v=>v==null?'–':(v>0?'+':'')+mins(v)},
+    {key:'flag',label:'Flag',fmt:v=>`<span class="tag" style="background:${FLAGS[v].color}">${FLAGS[v].label}</span>`,sortVal:r=>FLAG_ORDER.indexOf(r.flag)}],rows,{defaultSort:{key:'excess',dir:-1}});
+}
+
+/* ============================================================ IMPORT SUMMARY */
+const STEPS=['Cancelled','No assignment group','Contractor group','No engineer assigned','No usable date','Before the From date','After the To date','Group unticked','Other engineers (engineer filter)'];
+function exclusion(j,from,to){
+  if(j.cancelled)return STEPS[0];if(!j.group)return STEPS[1];if(!j.internal)return STEPS[2];if(!j.eng)return STEPS[3];if(!j.day)return STEPS[4];
+  if(j.day<from)return STEPS[5];if(j.day>to)return STEPS[6];if(!groupOn(j.group))return STEPS[7];const e=byId('fEng').value;if(e&&j.eng!==e)return STEPS[8];return'';
+}
+function renderImport(V){
+  const why=new Map(ALL.map(j=>[j,exclusion(j,V.from,V.to)]));const cnt={};why.forEach(r=>{if(r)cnt[r]=(cnt[r]||0)+1});
+  let left=ALL.length;const rows=[{step:'Rows in the export'+(FILES.length>1?'s':''),removed:null,left,cls:''}];
+  STEPS.forEach(st=>{if(!cnt[st])return;left-=cnt[st];rows.push({step:st,removed:cnt[st],left})});
+  const used=[...why.values()].filter(r=>!r).length;
+  table('funnelTable',[{key:'step',label:'Step',fmt:(v,r)=>r.removed==null?`<b>${esc(v)}</b>`:esc(v)},{key:'removed',label:'Removed',num:1,fmt:v=>v==null?'':'−'+num(v)},{key:'left',label:'Remaining',num:1,fmt:num}],
+    rows,{nosort:true,total:{step:'Jobs used for utilisation',removed:null,left:used}});
+  const S={};ALL.forEach(j=>{const k=j.state||'(blank)';S[k]=S[k]||{state:k,rows:0,used:0};S[k].rows++;if(!why.get(j))S[k].used++});
+  table('stateTable',[{key:'state',label:'State'},{key:'rows',label:'Rows',num:1,fmt:num},{key:'used',label:'In utilisation',num:1,fmt:num}],Object.values(S),{defaultSort:{key:'rows',dir:-1},total:{state:'Total',rows:ALL.length,used}});
+  const G={};ALL.forEach(j=>{const k=j.group||'(no group)';G[k]=G[k]||{group:k,type:!j.group?'–':j.internal?'Internal':'Contractor',rows:0,cancelled:0,used:0};G[k].rows++;if(j.cancelled)G[k].cancelled++;if(!why.get(j))G[k].used++});
+  table('groupRowsTable',[{key:'group',label:'Assignment group'},{key:'type',label:'Type'},{key:'rows',label:'Rows',num:1,fmt:num},{key:'cancelled',label:'Cancelled',num:1,fmt:num},{key:'used',label:'In utilisation',num:1,fmt:num,rag:(v,r)=>r.type==='Internal'&&!v&&r.rows-r.cancelled?'rag-a':''}],
+    Object.values(G),{defaultSort:{key:'rows',dir:-1}});
+  const odd=ALL.filter(j=>j.issues.length).map(j=>({...j,issue:j.issues.join('; '),why:why.get(j)||'Yes'}));
+  byId('oddNote').innerHTML=odd.length?`${num(odd.length)} job${odd.length===1?' has':'s have'} dates that look wrong (over a year from closing, end before start, or work open for over 30 days). <b>Estimated end</b> isn't used in any calculation. It only fills in planned time when Estimated work duration is blank. Odd scheduled dates only matter when there's no actual start; jobs open for weeks are already flagged in Data Quality and counted at their planned time.`:'No odd dates found.';
+  table('oddTable',[{key:'number',label:'WOT'},{key:'state',label:'State'},{key:'group',label:'Group'},{key:'eng',label:'Engineer'},{key:'issue',label:'Issue'},
+    {key:'schedStart',label:'Scheduled start',fmt:fmtDTY},{key:'estEnd',label:'Estimated end',fmt:fmtDTY},{key:'actStart',label:'Actual start',fmt:fmtDTY},{key:'actEnd',label:'Actual end',fmt:fmtDTY},{key:'closed',label:'Closed',fmt:fmtDTY},
+    {key:'why',label:'In utilisation?',fmt:v=>v==='Yes'?'<b>Yes</b>':'No: '+esc(v.toLowerCase())}],odd,{defaultSort:{key:'closed',dir:-1}});
+}
+function fmtDTY(ms){if(ms==null)return'–';const d=new Date(ms);return String(d.getUTCDate()).padStart(2,'0')+' '+MON[d.getUTCMonth()]+' '+d.getUTCFullYear()}
+
+/* ============================================================ PRINT */
+function printSel(){return[...byId('printList').querySelectorAll('input:checked')].map(i=>i.value)}
+function applyPrintSel(){const sel=printSel();let first=true;document.querySelectorAll('.panel').forEach(p=>{const on=sel.includes(p.id.replace('panel-',''));p.classList.toggle('print-on',on);p.classList.toggle('first-print',on&&first);if(on)first=false})}
+function fillPrintHeader(){
+  if(!VIEW)return;const V=VIEW,off=ALL_GROUPS.filter(g=>!GROUPS_ON.has(g)),eng=byId('fEng').value;
+  const groups=allGroupsOn()?'All internal groups':GROUPS_ON.size===0?'None':off.length<=4?'All except '+off.join(', '):[...GROUPS_ON].join(', ');
+  const now=new Date();
+  byId('printHeader').innerHTML=`<div class="ph-title">Engineer Utilisation Report</div><div class="ph-meta">
+    <b>Period:</b> ${fmtDay(V.from)} – ${fmtDay(V.to)} &nbsp;·&nbsp; <b>View by:</b> ${GRAN} &nbsp;·&nbsp; <b>Groups:</b> ${esc(groups)} &nbsp;·&nbsp; <b>Engineer:</b> ${esc(eng||'All')}<br>
+    <b>Target:</b> ${Math.round(CFG.target*100)}% &nbsp;·&nbsp; <b>Capacity:</b> ${CFG.basis==='weekdays'?'every weekday':'days each engineer had jobs'} × ${CFG.shift} min &nbsp;·&nbsp; <b>Travel:</b> ${CFG.travel==='actual'?'actual where recorded':'planned'}
+    &nbsp;·&nbsp; <b>Source:</b> ${esc(FILES.join(', '))} &nbsp;·&nbsp; <b>Printed:</b> ${now.getDate()} ${MON[now.getMonth()]} ${now.getFullYear()} ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}</div>`;
+}
+function enterPrint(){if(PRINTING||!JOBS.length)return;PRINTING=true;applyPrintSel();fillPrintHeader();document.body.classList.add('printing');if(isDark()){printOverride='light';applyTheme(false)}renderAll()}
+function exitPrint(){if(!PRINTING)return;PRINTING=false;document.body.classList.remove('printing');if(printOverride){printOverride=null;applyTheme(false)}renderAll();requestAnimationFrame(resizeCharts)}
+
+/* ============================================================ EXPORTS */
+function csv(name,lines){const t=lines.map(r=>r.map(x=>'"'+String(x??'').replace(/"/g,'""')+'"').join(',')).join('\n');const a=document.createElement('a');a.href=URL.createObjectURL(new Blob(['﻿'+t],{type:'text/csv'}));a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000)}
+const p1=v=>v==null?'':(v*100).toFixed(1);
+function exportPeriods(){if(!VIEW)return;csv(`utilisation-by-${GRAN}.csv`,[['Period','From','To','Partial','Engineers','Jobs','Installs','Service','Engineer-days','Planned hours','Actual hours','Capacity hours','Planned util %','Actual util %','Raw util %','Capture quality %','On-time start %'],
+  ...[...VIEW.periods,{...VIEW.all.T,label:'Whole range',from:VIEW.from,to:VIEW.to}].map(p=>[p.label,p.from,p.to,p.partial?'Yes':'',p.engineers,p.jobs,p.inst,p.serv,p.dayCount,hrs1(p.planMin),hrs1(p.actMin),hrs1(p.cap),p1(p.planUtil),p1(p.actUtil),p1(p.rawUtil),p1(p.quality),p1(p.ontimeR)])])}
+function exportEngineers(){if(!VIEW)return;const P=VIEW.periods;csv('engineer-utilisation.csv',[['Engineer','Group','Jobs','Installs','Service','Days','Planned hours','Actual hours','Capacity hours','Planned util %','Actual util %','Raw util %','Capture quality %','On-time %',...P.map(p=>'Actual util % '+p.label)],
+  ...[...VIEW.all.E.values()].map(e=>[e.name,e.group,e.jobs,e.inst,e.serv,e.dayCount,hrs1(e.planMin),hrs1(e.actMin),hrs1(e.cap),p1(e.planUtil),p1(e.actUtil),p1(e.rawUtil),p1(e.quality),p1(e.ontimeR),...P.map(p=>{const x=p.agg.E.get(e.name);return x?p1(x.actUtil):''})])])}
+function exportFlagged(){if(!VIEW)return;csv('flagged-jobs.csv',[['WOT','Engineer','Group','Type','Scheduled start','Planned work (min)','Actual start','Start typed by hand','Actual end','Recorded (min)','Flag'],
+  ...VIEW.jobs.filter(j=>j.flag!=='ok').map(j=>[j.number,j.eng,j.group,j.wtype,fmtDT(j.schedStart),Math.round(j.planWork),fmtDT(j.actStart),j.manualStart?'Yes':'No',fmtDT(j.actEnd),j.actual==null?'':Math.round(j.actual),FLAGS[j.flag].label])])}
+
+/* ============================================================ THEME */
+const darkMQ=window.matchMedia?matchMedia('(prefers-color-scheme: dark)'):null;let themePref='auto',printOverride=null;
+try{const t=localStorage.getItem('euTheme');if(['auto','light','dark'].includes(t))themePref=t}catch(e){}
+function isDark(){if(printOverride)return printOverride==='dark';return themePref==='dark'||(themePref==='auto'&&!!darkMQ&&darkMQ.matches)}
+function applyTheme(re=true){const m=printOverride||themePref,root=document.documentElement;if(m==='auto')root.removeAttribute('data-theme');else root.setAttribute('data-theme',m);
+  const d=isDark();Object.assign(C,d?C_DARK:C_LIGHT);Object.assign(TH,d?{grid:'#263445',label:'#e5e9ef',text:'#aab5c3',card:'#18222e'}:{grid:'#edf2f7',label:'#1f2937',text:'#4b5563',card:'#ffffff'});flagColors();
+  if(window.Chart&&Chart.defaults)Chart.defaults.color=TH.text;document.querySelectorAll('[data-theme-choice]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.themeChoice===themePref)));if(re&&JOBS.length)renderAll()}
+document.querySelectorAll('[data-theme-choice]').forEach(b=>b.onclick=()=>{themePref=b.dataset.themeChoice;try{localStorage.setItem('euTheme',themePref)}catch(e){}applyTheme()});
+if(darkMQ){const h=()=>{if(themePref==='auto')applyTheme()};darkMQ.addEventListener?darkMQ.addEventListener('change',h):darkMQ.addListener(h)}
+applyTheme(false);
+function resizeCharts(){Object.values(charts).forEach(c=>{try{c.resize()}catch(e){}})}
+function printAll(){byId('printPanel').classList.add('hidden');if(!printSel().length){alert('Tick at least one section to print.');return}enterPrint();setTimeout(()=>print(),450)}
+addEventListener('beforeprint',enterPrint);addEventListener('afterprint',exitPrint);
+
+/* ============================================================ EVENTS */
+function switchTab(t){document.querySelectorAll('.tab').forEach(b=>b.classList.toggle('active',b.dataset.tab===t));document.querySelectorAll('.panel').forEach(p=>p.classList.toggle('active',p.id==='panel-'+t));requestAnimationFrame(resizeCharts)}
+function clearEngineer(){byId('fEng').value='';renderAll()}
+byId('tabs').onclick=e=>{const b=e.target.closest('.tab');if(b)switchTab(b.dataset.tab)};
+byId('gran').onclick=e=>{const b=e.target.closest('button');if(!b)return;GRAN=b.dataset.g;byId('gran').querySelectorAll('button').forEach(x=>x.setAttribute('aria-pressed',String(x===b)));renderAll()};
+byId('presets').onclick=e=>{const b=e.target.closest('button');if(!b||!DATA_MAX)return;const p=b.dataset.p,end=DATA_MAX;let from;
+  if(p==='all'){from=DATA_MIN}else if(p==='4w'){from=addDays(end,-27)}else if(p==='ytd'){from=end.slice(0,4)+'-01-01'}else{const n={'3m':3,'6m':6,'12m':12}[p];const [y,m]=end.split('-').map(Number);from=dayKey(Date.UTC(y,m-n,1))}
+  byId('fFrom').value=from<DATA_MIN?DATA_MIN:from;byId('fTo').value=end;renderAll()};
+['fFrom','fTo','sTarget','sShift','sBasis','sTravel','sInstant','sOver','sOntime'].forEach(id=>byId(id).addEventListener('change',renderAll));
+byId('groupBtn').onclick=e=>{e.stopPropagation();const p=byId('groupPanel'),open=p.classList.toggle('hidden')===false;byId('groupBtn').setAttribute('aria-expanded',String(open))};
+byId('groupPanel').onclick=e=>e.stopPropagation();
+byId('printBtn').onclick=e=>{e.stopPropagation();const p=byId('printPanel'),open=p.classList.toggle('hidden')===false;byId('printBtn').setAttribute('aria-expanded',String(open))};
+byId('printPanel').onclick=e=>e.stopPropagation();byId('printGo').onclick=printAll;
+try{const ps=JSON.parse(localStorage.getItem('euPrint')||'null');if(Array.isArray(ps))byId('printList').querySelectorAll('input').forEach(i=>i.checked=ps.includes(i.value))}catch(e){}
+byId('printList').addEventListener('change',()=>{try{localStorage.setItem('euPrint',JSON.stringify(printSel()))}catch(e){}});
+document.addEventListener('click',()=>{byId('printPanel').classList.add('hidden');byId('groupPanel').classList.add('hidden');byId('groupBtn').setAttribute('aria-expanded','false')});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){byId('groupPanel').classList.add('hidden');byId('groupBtn').setAttribute('aria-expanded','false')}});
+byId('groupList').addEventListener('change',()=>setGroups([...byId('groupList').querySelectorAll('input:checked')].map(i=>i.value)));
+byId('groupPanel').querySelector('.ms-actions').onclick=e=>{const b=e.target.closest('button');if(!b)return;const m=b.dataset.ms;
+  if(m==='all')setGroups(ALL_GROUPS);else if(m==='none')setGroups([]);else setGroups(ALL_GROUPS.filter(g=>!/apac|anz|international|france/i.test(g)))};byId('fEng').addEventListener('change',renderAll);
+byId('hMetric').addEventListener('change',renderHeat);['dMeasure','dScope'].forEach(id=>byId(id).addEventListener('change',()=>VIEW&&renderDemand(VIEW)));byId('hSort').addEventListener('change',renderHeat);
+byId('qFlag').addEventListener('change',renderFlagged);byId('qEng').addEventListener('change',renderFlagged);byId('qSearch').addEventListener('input',renderFlagged);
+byId('fileInput').addEventListener('change',e=>{if(e.target.files.length)handleFiles(e.target.files);e.target.value=''});
+byId('clearBtn').onclick=()=>location.reload();
+const up=byId('uploadBox');['dragenter','dragover'].forEach(v=>up.addEventListener(v,e=>{e.preventDefault();up.classList.add('drag')}));
+['dragleave','drop'].forEach(v=>up.addEventListener(v,e=>{e.preventDefault();up.classList.remove('drag')}));up.addEventListener('drop',e=>{if(e.dataTransfer.files.length)handleFiles(e.dataTransfer.files)});
+</script>
+</body>
+</html>
